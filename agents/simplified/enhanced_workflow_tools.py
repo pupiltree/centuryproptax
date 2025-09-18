@@ -1237,15 +1237,15 @@ async def schedule_sample_collection(
             "scheduled_date_display": date_result["display_date"],
             "scheduled_time": preferred_time,
             "status": "scheduled",
-            "message": f"✅ Sample collection scheduled for {date_result['display_date']} at {preferred_time}",
-            "phlebotomist_contact": "+91-9876543210",
+            "message": f"✅ Property assessment appointment scheduled for {date_result['display_date']} at {preferred_time}",
+            "assessor_contact": "+91-9876543210",
             "instructions": [
-                "Fast for 12 hours if fasting tests are included",
-                "Have your ID proof ready",
+                "Have all property documents ready",
+                "Have your ID and property ownership proof ready",
                 "Ensure someone is available at the scheduled time"
             ],
             "special_instructions": special_instructions,
-            "contact_info": "Our phlebotomist will call you 30 minutes before arrival.",
+            "contact_info": "Our property assessor will call you 30 minutes before arrival.",
             "date_intelligence": {
                 "parsed_using": date_result["method_used"],
                 "days_from_now": date_result["days_from_now"],
@@ -1315,9 +1315,9 @@ async def verify_customer_payment(
                 "method": result.get("method"),
                 "message": "✅ Payment verified successfully! Your order is confirmed.",
                 "next_steps": [
-                    "Sample collection will be scheduled",
+                    "Property assessment will be scheduled",
                     "You will receive SMS confirmation",
-                    "Reports will be available post sample collection"
+                    "Assessment report will be available post property evaluation"
                 ]
             }
         else:
