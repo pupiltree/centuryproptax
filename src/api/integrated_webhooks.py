@@ -1,5 +1,5 @@
 """
-Production-ready webhook endpoints for Krsnaa Diagnostics.
+Production-ready webhook endpoints for Century Property Tax.
 Uses integrated handler with simplified agent + message batching + PRD alignment.
 """
 
@@ -78,7 +78,7 @@ async def health_check():
     start_time = datetime.now()
     health_status = {
         "status": "healthy",
-        "service": "krsnaa-diagnostics-modern",
+        "service": "century-property-tax-modern",
         "version": "4.0.0",
         "architecture": "langgraph-supervisor-pattern",
         "timestamp": start_time.isoformat(),
@@ -89,10 +89,10 @@ async def health_check():
             "llm_driven_routing",
             "no_hardcoded_logic",
             "intelligent_payload_interpretation",
-            "message_batching", 
+            "message_batching",
             "instagram_integration",
             "langchain_gemini",
-            "contextual_medical_analysis"
+            "contextual_property_tax_analysis"
         ]
     }
     
@@ -125,24 +125,24 @@ async def health_check():
         if not db_health:
             health_status["status"] = "degraded"
         
-        # Test catalog availability
+        # Assessment catalog availability
         try:
             session = db_manager.get_session()
-            from services.persistence.repositories import TestCatalogRepository
-            catalog_repo = TestCatalogRepository(session)
-            
+            from services.persistence.repositories import AssessmentCatalogRepository
+            catalog_repo = AssessmentCatalogRepository(session)
+
             catalog_check_start = datetime.now()
-            test_count = len(await catalog_repo.search_tests("", limit=1))
+            assessment_count = len(await catalog_repo.search_assessments("", limit=1))
             catalog_check_duration = (datetime.now() - catalog_check_start).total_seconds()
             await session.close()
-            
-            health_status["checks"]["test_catalog"] = {
+
+            health_status["checks"]["assessment_catalog"] = {
                 "status": "healthy",
                 "response_time_ms": round(catalog_check_duration * 1000, 2),
-                "tests_available": test_count > 0
+                "assessments_available": assessment_count > 0
             }
         except Exception as catalog_error:
-            health_status["checks"]["test_catalog"] = {
+            health_status["checks"]["assessment_catalog"] = {
                 "status": "unhealthy",
                 "error": str(catalog_error)
             }

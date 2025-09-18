@@ -1,6 +1,6 @@
 """
-Report Management API endpoints for authorized personnel.
-Allows lab staff to update report status and upload report files.
+Assessment Report Management API endpoints for authorized personnel.
+Allows property tax staff to update assessment report status and upload report files.
 """
 
 from datetime import datetime
@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from services.persistence.database import get_db_session
 from services.persistence.repositories import BookingRepository, CustomerRepository
 
-router = APIRouter(prefix="/api/reports", tags=["Report Management"])
+router = APIRouter(prefix="/api/assessment-reports", tags=["Assessment Report Management"])
 
 
 class ReportUpdateRequest(BaseModel):
@@ -33,15 +33,15 @@ class ReportSearchRequest(BaseModel):
 
 
 @router.get("/", response_class=HTMLResponse)
-async def report_management_page():
-    """Report management webpage for authorized personnel."""
+async def assessment_report_management_page():
+    """Assessment report management webpage for authorized personnel."""
     html_content = """
     <!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Krishna Diagnostics - Report Management</title>
+        <title>Century Property Tax - Assessment Report Management</title>
         <style>
             * {
                 margin: 0;
@@ -190,20 +190,20 @@ async def report_management_page():
     <body>
         <div class="container">
             <div class="header">
-                <h1>🏥 Krishna Diagnostics</h1>
-                <p>Report Management System - Authorized Personnel Only</p>
+                <h1>🏢 Century Property Tax</h1>
+                <p>Assessment Report Management System - Authorized Personnel Only</p>
             </div>
             
             <div class="content">
                 <div class="grid">
-                    <!-- Search Reports Section -->
+                    <!-- Search Assessment Reports Section -->
                     <div class="section">
-                        <h3>🔍 Search Reports</h3>
+                        <h3>🔍 Search Assessment Reports</h3>
                         <form id="searchForm">
                             <div class="form-group">
-                                <label for="searchBookingId">Booking ID:</label>
-                                <input type="text" id="searchBookingId" class="form-control" 
-                                       placeholder="e.g., KD20250811_T1">
+                                <label for="searchBookingId">Assessment ID:</label>
+                                <input type="text" id="searchBookingId" class="form-control"
+                                       placeholder="e.g., CPT20250811_A1">
                             </div>
                             <div class="form-group">
                                 <label for="searchPhone">Phone Number:</label>
@@ -221,22 +221,22 @@ async def report_management_page():
                                 </select>
                             </div>
                             <button type="button" class="btn" onclick="searchReports()">
-                                🔍 Search Reports
+                                🔍 Search Assessment Reports
                             </button>
                         </form>
                         <div id="searchResults" class="result-area">
-                            Click "Search Reports" to find bookings...
+                            Click "Search Assessment Reports" to find assessments...
                         </div>
                     </div>
                     
-                    <!-- Update Report Section -->
+                    <!-- Update Assessment Report Section -->
                     <div class="section">
-                        <h3>📝 Update Report Status</h3>
+                        <h3>📝 Update Assessment Report Status</h3>
                         <form id="updateForm">
                             <div class="form-group">
-                                <label for="updateBookingId">Booking ID: <span style="color: red;">*</span></label>
+                                <label for="updateBookingId">Assessment ID: <span style="color: red;">*</span></label>
                                 <input type="text" id="updateBookingId" class="form-control" required
-                                       placeholder="e.g., KD20250811_T1">
+                                       placeholder="e.g., CPT20250811_A1">
                             </div>
                             <div class="form-group">
                                 <label for="updateStatus">New Status: <span style="color: red;">*</span></label>
@@ -249,9 +249,9 @@ async def report_management_page():
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="reportUrl">Report URL (if ready):</label>
-                                <input type="url" id="reportUrl" class="form-control" 
-                                       placeholder="https://reports.krsnaa.com/download/...">
+                                <label for="reportUrl">Assessment Report URL (if ready):</label>
+                                <input type="url" id="reportUrl" class="form-control"
+                                       placeholder="https://reports.centuryproptax.com/download/...">
                             </div>
                             <div class="form-group">
                                 <label for="updateNotes">Notes:</label>
@@ -259,14 +259,14 @@ async def report_management_page():
                                           placeholder="Optional notes about the report status..."></textarea>
                             </div>
                             <button type="button" class="btn" onclick="updateReport()">
-                                💾 Update Report
+                                💾 Update Assessment Report
                             </button>
                             <button type="button" class="btn btn-secondary" onclick="clearForm()">
                                 🗑️ Clear Form
                             </button>
                         </form>
                         <div id="updateResults" class="result-area">
-                            Fill the form above and click "Update Report"...
+                            Fill the form above and click "Update Assessment Report"...
                         </div>
                     </div>
                 </div>
@@ -274,9 +274,9 @@ async def report_management_page():
                 <!-- Quick Actions -->
                 <div class="section">
                     <h3>⚡ Quick Actions</h3>
-                    <button class="btn" onclick="loadPendingReports()">📋 Load Pending Reports</button>
-                    <button class="btn" onclick="loadProcessingReports()">⚗️ Load Processing Reports</button>
-                    <button class="btn" onclick="loadTodaysBookings()">📅 Today's Bookings</button>
+                    <button class="btn" onclick="loadPendingReports()">📋 Load Pending Assessments</button>
+                    <button class="btn" onclick="loadProcessingReports()">⚗️ Load Processing Assessments</button>
+                    <button class="btn" onclick="loadTodaysBookings()">📅 Today's Assessments</button>
                     <button class="btn btn-secondary" onclick="clearAllResults()">🗑️ Clear All Results</button>
                 </div>
             </div>
@@ -284,7 +284,7 @@ async def report_management_page():
         
         <script>
             // API Base URL
-            const API_BASE = '/api/reports';
+            const API_BASE = '/api/assessment-reports';
             
             // Search Reports Function
             async function searchReports() {
@@ -319,20 +319,20 @@ async def report_management_page():
                 const resultsDiv = document.getElementById('searchResults');
                 
                 if (!bookings || bookings.length === 0) {
-                    resultsDiv.textContent = 'No bookings found matching your criteria.';
+                    resultsDiv.textContent = 'No assessments found matching your criteria.';
                     return;
                 }
-                
-                let html = `Found ${bookings.length} booking(s):\\n\\n`;
-                
+
+                let html = `Found ${bookings.length} assessment(s):\\n\\n`;
+
                 bookings.forEach((booking, index) => {
                     const statusClass = `status-${booking.status || 'pending'}`;
                     const statusBadge = `<span class="${statusClass}">${booking.status || 'pending'}</span>`;
                     
-                    html += `${index + 1}. Booking ID: ${booking.booking_id}\\n`;
-                    html += `   Customer: ${booking.customer_name}\\n`;
+                    html += `${index + 1}. Assessment ID: ${booking.booking_id}\\n`;
+                    html += `   Property Owner: ${booking.customer_name}\\n`;
                     html += `   Phone: ${booking.phone}\\n`;
-                    html += `   Test: ${booking.test_name}\\n`;
+                    html += `   Assessment: ${booking.test_name}\\n`;
                     html += `   Status: ${booking.status || 'pending'}\\n`;
                     html += `   Date: ${new Date(booking.created_at).toLocaleDateString()}\\n`;
                     if (booking.report_url) {
@@ -403,7 +403,7 @@ async def report_management_page():
             // Clear Form
             function clearForm() {
                 document.getElementById('updateForm').reset();
-                document.getElementById('updateResults').textContent = 'Form cleared. Fill the form above and click "Update Report"...';
+                document.getElementById('updateResults').textContent = 'Form cleared. Fill the form above and click "Update Assessment Report"...';
             }
             
             // Quick Action Functions
@@ -419,21 +419,21 @@ async def report_management_page():
             
             async function loadTodaysBookings() {
                 // This would require a date filter in the API
-                document.getElementById('searchResults').textContent = 'Today\\'s bookings feature coming soon...';
+                document.getElementById('searchResults').textContent = 'Today\\'s assessments feature coming soon...';
             }
-            
+
             function clearAllResults() {
-                document.getElementById('searchResults').textContent = 'Click "Search Reports" to find bookings...';
-                document.getElementById('updateResults').textContent = 'Fill the form above and click "Update Report"...';
+                document.getElementById('searchResults').textContent = 'Click "Search Assessment Reports" to find assessments...';
+                document.getElementById('updateResults').textContent = 'Fill the form above and click "Update Assessment Report"...';
                 document.getElementById('searchForm').reset();
             }
             
             // Auto-populate update form when clicking on search results
             document.getElementById('searchResults').addEventListener('click', function(e) {
                 const text = e.target.textContent;
-                const bookingIdMatch = text.match(/Booking ID: (\\S+)/);
-                if (bookingIdMatch) {
-                    document.getElementById('updateBookingId').value = bookingIdMatch[1];
+                const assessmentIdMatch = text.match(/Assessment ID: (\\S+)/);
+                if (assessmentIdMatch) {
+                    document.getElementById('updateBookingId').value = assessmentIdMatch[1];
                 }
             });
         </script>
@@ -444,12 +444,12 @@ async def report_management_page():
 
 
 @router.get("/search")
-async def search_reports(
+async def search_assessment_reports(
     booking_id: Optional[str] = None,
     phone: Optional[str] = None,
     status: Optional[str] = None
 ) -> Dict[str, Any]:
-    """Search for bookings/reports with various filters."""
+    """Search for assessment bookings/reports with various filters."""
     try:
         async with get_db_session() as session:
             booking_repo = BookingRepository(session)
@@ -458,21 +458,21 @@ async def search_reports(
             bookings = []
             
             if booking_id:
-                # Search by specific booking ID
+                # Search by specific assessment ID
                 booking = await booking_repo.get_by_booking_id(booking_id)
                 if booking:
                     customer = await customer_repo.get_by_id(booking.customer_id)
                     bookings = [booking]
-                    
+
             elif phone:
                 # Search by phone number
                 clean_phone = phone.replace("+91", "").replace("-", "").replace(" ", "")
                 customer = await customer_repo.get_by_phone(clean_phone)
                 if customer:
                     bookings = await booking_repo.get_customer_bookings(customer.id, limit=20)
-                    
+
             else:
-                # Get all bookings with optional status filter
+                # Get all assessment bookings with optional status filter
                 bookings = await booking_repo.get_all_bookings(limit=50)
             
             # Filter by status if provided
@@ -488,7 +488,7 @@ async def search_reports(
                     "booking_id": booking.booking_id,
                     "customer_name": customer.name,
                     "phone": customer.phone,
-                    "test_name": f"Test {booking.test_id}",  # Would need to join with test catalog
+                    "test_name": f"Assessment {booking.test_id}",  # Would need to join with assessment catalog
                     "status": booking.status,
                     "created_at": booking.created_at.isoformat(),
                     "report_url": booking.notes if booking.notes and "http" in booking.notes else None,
@@ -499,7 +499,7 @@ async def search_reports(
                 "success": True,
                 "bookings": formatted_bookings,
                 "total_found": len(formatted_bookings),
-                "message": f"Found {len(formatted_bookings)} booking(s)"
+                "message": f"Found {len(formatted_bookings)} assessment(s)"
             }
             
     except Exception as e:
@@ -511,19 +511,19 @@ async def search_reports(
 
 
 @router.post("/update")
-async def update_report_status(request: ReportUpdateRequest) -> Dict[str, Any]:
-    """Update report status for a specific booking."""
+async def update_assessment_report_status(request: ReportUpdateRequest) -> Dict[str, Any]:
+    """Update assessment report status for a specific booking."""
     try:
         async with get_db_session() as session:
             booking_repo = BookingRepository(session)
             
-            # Find the booking
+            # Find the assessment booking
             booking = await booking_repo.get_by_booking_id(request.booking_id)
-            
+
             if not booking:
                 return {
                     "success": False,
-                    "message": f"Booking '{request.booking_id}' not found"
+                    "message": f"Assessment '{request.booking_id}' not found"
                 }
             
             # Update booking status
@@ -533,7 +533,7 @@ async def update_report_status(request: ReportUpdateRequest) -> Dict[str, Any]:
                 notes=request.notes
             )
             
-            # If report URL provided, store it in notes (simple implementation)
+            # If assessment report URL provided, store it in notes (simple implementation)
             if request.report_url:
                 notes_data = {
                     "report_url": request.report_url,
@@ -549,7 +549,7 @@ async def update_report_status(request: ReportUpdateRequest) -> Dict[str, Any]:
                 "success": True,
                 "booking_id": request.booking_id,
                 "status": request.status,
-                "message": f"Report status updated to '{request.status}'",
+                "message": f"Assessment report status updated to '{request.status}'",
                 "updated_at": datetime.now().isoformat()
             }
             
