@@ -18,8 +18,8 @@ router = APIRouter()
 @router.get("/webhook")
 async def verify_webhook(request: Request):
     """
-    Instagram webhook verification endpoint.
-    Instagram sends a GET request to verify the webhook URL.
+    WhatsApp webhook verification endpoint.
+    WhatsApp sends a GET request to verify the webhook URL.
     """
     verify_token = os.getenv("VERIFY_TOKEN", "")
     mode = request.query_params.get("hub.mode")
@@ -37,7 +37,7 @@ async def verify_webhook(request: Request):
 @router.post("/webhook")
 async def handle_webhook(request: Request):
     """
-    Instagram webhook handler endpoint.
+    WhatsApp webhook handler endpoint.
     Uses integrated handler with simplified agent + message batching.
     """
     try:
@@ -65,7 +65,7 @@ async def handle_webhook(request: Request):
         
     except Exception as e:
         logger.error(f"❌ Error handling webhook: {e}", exc_info=True)
-        # Return 200 to prevent Instagram from retrying
+        # Return 200 to prevent WhatsApp from retrying
         return {"status": "error", "message": str(e)}
 
 
@@ -90,7 +90,7 @@ async def health_check():
             "no_hardcoded_logic",
             "intelligent_payload_interpretation",
             "message_batching",
-            "instagram_integration",
+            "whatsapp_integration",
             "langchain_gemini",
             "contextual_property_tax_analysis"
         ]
@@ -182,7 +182,7 @@ async def health_check():
     
     # Environment configuration check
     import os
-    required_vars = ["IG_TOKEN", "IG_USER_ID", "VERIFY_TOKEN", "GOOGLE_API_KEY"]
+    required_vars = ["WHATSAPP_TOKEN", "WHATSAPP_PHONE_ID", "VERIFY_TOKEN", "GOOGLE_API_KEY"]
     env_status = "healthy"
     missing_vars = []
     

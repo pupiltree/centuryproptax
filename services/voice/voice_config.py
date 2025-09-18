@@ -1,5 +1,5 @@
 """
-Krishna Diagnostics Voice Configuration
+Century Property Tax Voice Configuration
 Configuration settings for voice channel integration.
 """
 
@@ -16,7 +16,7 @@ class VoiceConfig:
         # No hardcoded patterns - using LLM intelligence instead
     
     # LiveKit Configuration
-    LIVEKIT_URL: str = os.getenv("LIVEKIT_URL", "wss://livekit.krishnadiagnostics.ai")
+    LIVEKIT_URL: str = os.getenv("LIVEKIT_URL", "wss://voice.centuryproptax.com")
     LIVEKIT_API_KEY: str = os.getenv("LIVEKIT_API_KEY", "devkey")
     LIVEKIT_API_SECRET: str = os.getenv("LIVEKIT_API_SECRET", "secret")
     
@@ -25,16 +25,16 @@ class VoiceConfig:
     
     # Voice Model Settings
     VOICE_MODEL: str = "gemini-live-2.5-flash-preview"
-    VOICE_PERSONA: str = "Charon"  # Professional, clear voice
+    VOICE_PERSONA: str = "Alex"  # Professional, clear voice
     VOICE_LANGUAGE: str = "en-IN"   # Indian English
-    VOICE_TEMPERATURE: float = 0.2  # Conservative for healthcare
+    VOICE_TEMPERATURE: float = 0.2  # Conservative for property tax advice
     
     # Voice Detection Settings (Optimized for Indian English + Hindi)
     VAD_PREFIX_PADDING_MS: int = 500     # Account for Indian speech patterns
     VAD_SILENCE_DURATION_MS: int = 1200  # Longer pause for deliberate speech
     VAD_THRESHOLD: float = 0.5           # Accommodate diverse accents
     
-    # Healthcare Settings - Using LLM-based emergency assessment instead of keywords
+    # Property Tax Settings - Using LLM-based assessment for complex tax queries
     
     # Supported Languages
     SUPPORTED_LANGUAGES: Dict[str, str] = {
@@ -52,28 +52,29 @@ class VoiceConfig:
     
     # Business Hours (24/7 for voice, but different services)
     BUSINESS_HOURS = {
-        'lab_visits': {'start': 6, 'end': 22},      # 6 AM - 10 PM
-        'home_collection': {'start': 7, 'end': 21}, # 7 AM - 9 PM
+        'consultations': {'start': 9, 'end': 17},      # 9 AM - 5 PM
+        'document_services': {'start': 9, 'end': 18}, # 9 AM - 6 PM
         'voice_support': {'start': 0, 'end': 24},   # 24/7
-        'emergency_escalation': {'start': 0, 'end': 24}  # 24/7
+        'urgent_assistance': {'start': 0, 'end': 24}  # 24/7
     }
     
     # Voice Response Templates
     GREETING_TEMPLATES: Dict[str, str] = {
-        'english': """Hello, this is Maya from Krishna Diagnostics. I'm here to help you with 
-                     diagnostic test booking, test information, or report status. For your convenience, 
-                     I can speak in Hindi or English - which language would you prefer? 
-                     And how may I assist you with your healthcare needs today?""",
-        
-        'hindi': """Namaste, main Maya hun Krishna Diagnostics se. Main aapki diagnostic test booking, 
-                   test ki jaankari, ya report status mein madad kar sakti hun. Aap Hindi ya English 
-                   mein baat karna chahenge? Aur main aaj aapki healthcare needs mein kaise madad kar sakti hun?""",
+        'english': """Hello, this is Alex from Century Property Tax. I'm here to help you with
+                     property tax calculations, assessment appeals, payment assistance, or document services.
+                     For your convenience, I can speak in Hindi or English - which language would you prefer?
+                     And how may I assist you with your property tax needs today?""",
+
+        'hindi': """Namaste, main Alex hun Century Property Tax se. Main aapki property tax calculation,
+                   assessment appeal, payment assistance, ya document services mein madad kar sakti hun.
+                   Aap Hindi ya English mein baat karna chahenge? Aur main aaj aapki property tax needs
+                   mein kaise madad kar sakti hun?""",
     }
     
-    EMERGENCY_ESCALATION_MESSAGE: str = """⚠️ This sounds like a medical emergency. Please call 108 
-    (India Emergency) or go to the nearest hospital immediately. Krishna Diagnostics provides 
-    diagnostic testing, not emergency medical care. Please seek immediate medical attention 
-    from a qualified doctor."""
+    URGENT_ESCALATION_MESSAGE: str = """⚠️ This sounds like an urgent property tax matter requiring
+    immediate attention. Please contact your local tax authority or visit their office during
+    business hours. Century Property Tax provides consultation and assistance, but for legal deadlines
+    and official matters, please contact the appropriate government office directly."""
     
     # Payment Configuration
     PAYMENT_METHODS: List[str] = ['online', 'cash', 'card']
@@ -108,40 +109,40 @@ class VoiceConfig:
             "threshold": self.VAD_THRESHOLD
         }
     
-    async def assess_emergency_with_llm(self, symptoms: str) -> Dict[str, Any]:
-        """Use LLM to intelligently assess if symptoms indicate a medical emergency."""
+    async def assess_urgency_with_llm(self, query: str) -> Dict[str, Any]:
+        """Use LLM to intelligently assess if property tax query requires urgent attention."""
         try:
             from langchain_google_genai import ChatGoogleGenerativeAI
             from langchain_core.messages import HumanMessage, SystemMessage
             
             model = ChatGoogleGenerativeAI(
-                model=self.EMERGENCY_ASSESSMENT_MODEL, 
-                temperature=self.EMERGENCY_ASSESSMENT_TEMPERATURE
+                model=self.VOICE_MODEL,
+                temperature=self.VOICE_TEMPERATURE
             )
-            
+
             prompt = f"""
-Assess if these symptoms indicate a medical emergency requiring immediate hospital care: {symptoms}
+Assess if this property tax query requires urgent attention with deadlines or legal implications: {query}
 
 Respond with:
-EMERGENCY: [reason] OR NON_EMERGENCY: [reason]
+URGENT: [reason] OR NON_URGENT: [reason]
 """
             
             response = model.invoke([SystemMessage(content=prompt)])
             
-            is_emergency = response.content.strip().startswith("EMERGENCY:")
-            explanation = response.content.replace("EMERGENCY:" if is_emergency else "NON_EMERGENCY:", "").strip()
-            
+            is_urgent = response.content.strip().startswith("URGENT:")
+            explanation = response.content.replace("URGENT:" if is_urgent else "NON_URGENT:", "").strip()
+
             return {
-                'is_emergency': is_emergency,
+                'is_urgent': is_urgent,
                 'explanation': explanation,
-                'confidence': 'high' if 'severe' in symptoms.lower() else 'medium'
+                'confidence': 'high' if 'deadline' in query.lower() else 'medium'
             }
             
         except Exception as e:
-            # Conservative fallback - always err on the side of medical safety
+            # Conservative fallback - always err on the side of caution for legal deadlines
             return {
-                'is_emergency': True,
-                'explanation': 'Unable to assess - please seek medical attention for safety',
+                'is_urgent': True,
+                'explanation': 'Unable to assess - please contact tax authority for time-sensitive matters',
                 'confidence': 'fallback'
             }
     

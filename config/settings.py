@@ -28,7 +28,7 @@ class Settings:
     redis_url: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
     
     # State Persistence Configuration
-    state_key_prefix: str = os.getenv("STATE_KEY_PREFIX", "conversation_state")
+    state_key_prefix: str = os.getenv("STATE_KEY_PREFIX", "property_tax_conversation")
     state_persistence_ttl: int = int(os.getenv("STATE_PERSISTENCE_TTL", "86400"))  # 24 hours
     
     # Agent Configuration (legacy options - not currently used)
@@ -39,6 +39,16 @@ class Settings:
     
     # Security
     secret_key: str = os.getenv("SECRET_KEY", "test_secret_key_for_development_only")
+
+    # Property Tax Specific Configuration
+    property_tax_calculator_api_url: str = os.getenv("PROPERTY_TAX_CALCULATOR_API_URL", "https://api.centuryproptax.com/calculator")
+    property_records_api_url: str = os.getenv("PROPERTY_RECORDS_API_URL", "https://api.centuryproptax.com/records")
+    assessment_notification_api_url: str = os.getenv("ASSESSMENT_NOTIFICATION_API_URL", "https://api.centuryproptax.com/notifications")
+    payment_portal_url: str = os.getenv("PAYMENT_PORTAL_URL", "https://payments.centuryproptax.com")
+
+    # Encryption Keys
+    property_data_encryption_key: Optional[str] = os.getenv("PROPERTY_DATA_ENCRYPTION_KEY")
+    consultation_encryption_key: Optional[str] = os.getenv("CONSULTATION_ENCRYPTION_KEY")
     
     @classmethod
     def validate(cls) -> bool:
@@ -71,6 +81,9 @@ class Settings:
         print(f"   GOOGLE_API_KEY: {'✅ Set' if cls.google_api_key else '❌ Missing'}")
         print(f"   DEBUG: {cls.debug}")
         print(f"   LOG_LEVEL: {cls.log_level}")
+        print(f"   PROPERTY_TAX_CALCULATOR_API: {'✅ Set' if cls.property_tax_calculator_api_url else '❌ Default'}")
+        print(f"   PROPERTY_RECORDS_API: {'✅ Set' if cls.property_records_api_url else '❌ Default'}")
+        print(f"   PAYMENT_PORTAL_URL: {'✅ Set' if cls.payment_portal_url else '❌ Default'}")
 
 
 # Global settings instance
