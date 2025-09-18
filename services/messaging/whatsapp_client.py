@@ -1,5 +1,5 @@
 """
-WhatsApp Business Cloud API Client for Krishna Diagnostics
+WhatsApp Business Cloud API Client for Century Property Tax
 Handles sending and receiving messages via WhatsApp Business API.
 """
 
@@ -23,7 +23,7 @@ class WhatsAppClient:
         self.phone_number_id = os.getenv("WA_PHONE_NUMBER_ID", "668229953048351")
         self.business_account_id = os.getenv("WA_BUSINESS_ACCOUNT_ID", "2150712978774203")
         self.access_token = os.getenv("WA_ACCESS_TOKEN")
-        self.verify_token = os.getenv("WA_VERIFY_TOKEN", "krsnaa_whatsapp_webhook_secure_2024")
+        self.verify_token = os.getenv("WA_VERIFY_TOKEN", "century_whatsapp_webhook_secure_2024")
         
         # API endpoints
         self.base_url = "https://graph.facebook.com/v20.0"

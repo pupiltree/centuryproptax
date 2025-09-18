@@ -249,7 +249,7 @@ async def create_mock_razorpay_payment_link(
             callback_url=f"{BASE_URL}/webhook/mock-razorpay/callback",
             notes={
                 "order_id": order_id,
-                "service": "krsnaa_diagnostics",
+                "service": "century_property_tax",
                 "created_by": "chatbot_mock"
             }
         )

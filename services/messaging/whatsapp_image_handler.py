@@ -74,7 +74,7 @@ class WhatsAppImageHandler:
             url = f"https://graph.facebook.com/v20.0/{media_id}"
             headers = {
                 "Authorization": f"Bearer {self.access_token}",
-                "User-Agent": "Krsnaa Diagnostics Bot/1.0"
+                "User-Agent": "Century Property Tax Bot/1.0"
             }
             
             async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
@@ -103,7 +103,7 @@ class WhatsAppImageHandler:
         try:
             headers = {
                 "Authorization": f"Bearer {self.access_token}",
-                "User-Agent": "Krsnaa Diagnostics Bot/1.0"
+                "User-Agent": "Century Property Tax Bot/1.0"
             }
             
             async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=60)) as session:

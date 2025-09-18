@@ -1,5 +1,5 @@
 """
-Real Razorpay Payment Integration for Krsnaa Diagnostics
+Real Razorpay Payment Integration for Century Property Tax
 Includes payment link creation, webhook verification, and fraud prevention.
 """
 
@@ -359,7 +359,7 @@ async def create_razorpay_payment_link(
             })
         
         # Create callback URL for webhook
-        callback_url = f"{os.getenv('BASE_URL', 'https://api.krsnaa.com')}/webhook/razorpay/callback"
+        callback_url = f"{os.getenv('BASE_URL', 'https://api.centuryproptax.com')}/webhook/razorpay/callback"
         
         # Create payment link with Razorpay
         result = razorpay_service.create_payment_link(
@@ -372,7 +372,7 @@ async def create_razorpay_payment_link(
             callback_url=callback_url,
             notes={
                 "order_id": order_id,
-                "service": "krsnaa_diagnostics",
+                "service": "century_property_tax",
                 "created_by": "chatbot"
             }
         )

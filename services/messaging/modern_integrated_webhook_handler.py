@@ -1,5 +1,5 @@
 """
-Modern LangGraph Supervisor-Based Webhook Handler for Krsnaa Diagnostics.
+Modern LangGraph Supervisor-Based Webhook Handler for Century Property Tax.
 COMPLETELY ELIMINATES hardcoded routing logic and payload mappings.
 Uses pure LLM decision making following LangGraph customer support patterns.
 """

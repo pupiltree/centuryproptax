@@ -45,7 +45,7 @@ class InstagramImageHandler:
             # Download image using Instagram Graph API
             headers = {
                 "Authorization": f"Bearer {self.ig_token}",
-                "User-Agent": "Krsnaa Diagnostics Bot/1.0"
+                "User-Agent": "Century Property Tax Bot/1.0"
             }
             
             async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=30)) as session:
