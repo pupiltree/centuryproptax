@@ -1,4 +1,4 @@
-"""Application settings for Krsnaa Diagnostics AI Chatbot."""
+"""Application settings for Century Property Tax AI Chatbot."""
 
 import os
 from dotenv import load_dotenv
@@ -11,9 +11,9 @@ load_dotenv()
 class Settings:
     """Application settings with environment variable support."""
     
-    # Instagram Configuration
-    ig_token: str = os.getenv("IG_TOKEN", "")
-    ig_user_id: str = os.getenv("IG_USER_ID", "")  
+    # WhatsApp Configuration
+    whatsapp_token: str = os.getenv("WHATSAPP_TOKEN", "")
+    whatsapp_phone_id: str = os.getenv("WHATSAPP_PHONE_ID", "")
     verify_token: str = os.getenv("VERIFY_TOKEN", "")
     
     # Meta App Configuration (not currently used in production)
@@ -24,7 +24,7 @@ class Settings:
     gemini_model_flash: str = os.getenv("GEMINI_MODEL_FLASH", "gemini-2.5-flash")
     
     # Database Configuration
-    database_url: str = os.getenv("DATABASE_URL", "sqlite:///krishna_diagnostics.db")
+    database_url: str = os.getenv("DATABASE_URL", "sqlite:///century_property_tax.db")
     redis_url: str = os.getenv("REDIS_URL", "redis://localhost:6379/0")
     
     # State Persistence Configuration
@@ -44,8 +44,8 @@ class Settings:
     def validate(cls) -> bool:
         """Validate essential configuration."""
         required_vars = [
-            ("IG_TOKEN", cls.ig_token),
-            ("IG_USER_ID", cls.ig_user_id),
+            ("WHATSAPP_TOKEN", cls.whatsapp_token),
+            ("WHATSAPP_PHONE_ID", cls.whatsapp_phone_id),
             ("VERIFY_TOKEN", cls.verify_token),
         ]
         
@@ -65,8 +65,8 @@ class Settings:
     def print_config(cls):
         """Print current configuration (safely)."""
         print("📋 Current Configuration:")
-        print(f"   IG_TOKEN: {'✅ Set' if cls.ig_token else '❌ Missing'}")
-        print(f"   IG_USER_ID: {cls.ig_user_id}")
+        print(f"   WHATSAPP_TOKEN: {'✅ Set' if cls.whatsapp_token else '❌ Missing'}")
+        print(f"   WHATSAPP_PHONE_ID: {cls.whatsapp_phone_id}")
         print(f"   VERIFY_TOKEN: {'✅ Set' if cls.verify_token else '❌ Missing'}")
         print(f"   GOOGLE_API_KEY: {'✅ Set' if cls.google_api_key else '❌ Missing'}")
         print(f"   DEBUG: {cls.debug}")
