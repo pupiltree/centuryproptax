@@ -1,5 +1,5 @@
 """
-Utility modules for Krishna Diagnostics.
+Utility modules for Century Property Tax.
 """
 
 from .retry_handler import (

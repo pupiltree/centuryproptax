@@ -1,6 +1,6 @@
 """
-Intelligent Date Parsing Service for Krsnaa Diagnostics
-Handles natural language dates, business hours, and booking constraints.
+Intelligent Date Parsing Service for Century Property Tax
+Handles natural language dates, business hours, and appointment constraints.
 """
 
 import re

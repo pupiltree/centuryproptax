@@ -1,13 +1,13 @@
-# Krishna Diagnostics Voice Agent
+# Century Property Tax Voice Agent
 
-Enterprise-grade voice integration for Krishna Diagnostics healthcare services using LiveKit + Google Gemini Live API.
+Enterprise-grade voice integration for Century Property Tax services using LiveKit + Google Gemini Live API.
 
 ## 🎯 Features
 
-### 🏥 Healthcare-Focused Voice Assistant
-- **Complete Workflow Integration**: Seamless booking, payment, and report status checking
-- **Medical RAG System**: Intelligent test recommendations using Google embeddings
-- **Emergency Protocols**: Automated escalation for urgent medical situations
+### 🏛️ Property Tax-Focused Voice Assistant
+- **Complete Workflow Integration**: Seamless assessment scheduling, payment, and status checking
+- **Property Tax RAG System**: Intelligent tax assessment recommendations using Google embeddings
+- **Priority Protocols**: Automated escalation for urgent property tax matters
 - **Prescription Analysis**: Voice-guided prescription image submission workflow
 
 ### 🗣️ Advanced Voice Capabilities

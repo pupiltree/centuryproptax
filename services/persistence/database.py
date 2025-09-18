@@ -1,6 +1,6 @@
 """
-Database models and operations for Krsnaa Diagnostics.
-SQLAlchemy async models for customer data, bookings, and medical records.
+Database models and operations for Century Property Tax.
+SQLAlchemy async models for customer data, property assessments, and tax records.
 """
 
 import asyncio
