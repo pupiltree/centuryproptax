@@ -1,5 +1,5 @@
 """
-WhatsApp Business API webhook handlers for Krishna Diagnostics.
+WhatsApp Business API webhook handlers for Century Property Tax.
 Handles webhook verification and message processing.
 """
 
