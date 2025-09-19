@@ -1,6 +1,6 @@
 """
-Enhanced workflow tools for Krsnaa Diagnostics following the complete workflow diagram.
-Implements missing tools for orders, payments, PIN validation, and report retrieval.
+Enhanced workflow tools for Century Property Tax following the complete workflow diagram.
+Implements tools for property assessments, appeals, payment processing, and report retrieval.
 """
 
 import asyncio
@@ -37,237 +37,237 @@ from services.utils.retry_handler import (
 
 logger = structlog.get_logger()
 
-# PIN Code Service Areas (expandable)
-SERVICEABLE_PINS = {
-    "560001": {"area": "Bangalore Central", "available": True, "home_collection": True},
-    "560002": {"area": "Bangalore East", "available": True, "home_collection": True}, 
-    "560003": {"area": "Bangalore West", "available": True, "home_collection": True},
-    "560004": {"area": "Bangalore South", "available": True, "home_collection": True},
-    "560005": {"area": "Bangalore North", "available": True, "home_collection": True},
-    "110001": {"area": "Delhi Central", "available": True, "home_collection": True},
-    "400001": {"area": "Mumbai Central", "available": True, "home_collection": True},
-    "600001": {"area": "Chennai Central", "available": True, "home_collection": True},
-    "500001": {"area": "Hyderabad Central", "available": True, "home_collection": True},
-    "700001": {"area": "Kolkata Central", "available": True, "home_collection": True},
+# ZIP Code Service Areas (expandable)
+SERVICEABLE_ZIPS = {
+    "75001": {"area": "Dallas County", "available": True, "onsite_assessment": True},
+    "75002": {"area": "Dallas County East", "available": True, "onsite_assessment": True},
+    "75003": {"area": "Dallas County West", "available": True, "onsite_assessment": True},
+    "75004": {"area": "Dallas County South", "available": True, "onsite_assessment": True},
+    "75005": {"area": "Dallas County North", "available": True, "onsite_assessment": True},
+    "77001": {"area": "Harris County", "available": True, "onsite_assessment": True},
+    "78701": {"area": "Travis County", "available": True, "onsite_assessment": True},
+    "79901": {"area": "El Paso County", "available": True, "onsite_assessment": True},
+    "76101": {"area": "Tarrant County", "available": True, "onsite_assessment": True},
+    "78201": {"area": "Bexar County", "available": True, "onsite_assessment": True},
 }
 
-# Pydantic Schema for create_order tool
-class CreateOrderSchema(BaseModel):
-    """Schema for creating medical test orders with comprehensive validation"""
-    
-    instagram_id: str = Field(description="Customer's Instagram ID for identification")
-    customer_name: str = Field(description="Full name of the customer")
+# Pydantic Schema for create_assessment tool
+class CreateAssessmentSchema(BaseModel):
+    """Schema for creating property assessment requests with comprehensive validation"""
+
+    whatsapp_id: str = Field(description="Customer's WhatsApp ID for identification")
+    customer_name: str = Field(description="Full name of the property owner")
     phone: str = Field(description="Customer phone number (digits only, formatting will be stripped automatically)")
-    test_codes: List[str] = Field(
-        description="List of medical test codes to book. Examples: ['CBC', 'LIPID_PROFILE', 'HBA1C', 'FBS', 'THYROID']. Available codes can be found using suggest_advanced_test_panel tool"
+    assessment_types: List[str] = Field(
+        description="List of assessment types to request. Examples: ['property_valuation', 'appeal_review', 'exemption_analysis', 'market_analysis']. Available types can be found using suggest_assessment_services tool"
     )
-    pin_code: str = Field(
-        description="Collection area PIN code (6 digits). Must be serviceable area - validate with validate_pin_code tool first"
+    zip_code: str = Field(
+        description="Property ZIP code (5 digits). Must be serviceable area - validate with validate_zip_code tool first"
     )
     preferred_date: Optional[str] = Field(
         default=None,
-        description="Preferred booking date. Accepts: YYYY-MM-DD format ('2025-08-27'), natural language ('tomorrow', 'next Monday', 'August 30th'), or None for system suggestion"
+        description="Preferred assessment date. Accepts: YYYY-MM-DD format ('2025-08-27'), natural language ('tomorrow', 'next Monday', 'August 30th'), or None for system suggestion"
     )
     preferred_time: Optional[str] = Field(
         default=None,
         description="Preferred time slot. Options: 'morning' (8AM-12PM), 'afternoon' (12PM-4PM), 'evening' (4PM-8PM), specific times ('10:00 AM', '2:30 PM'), or None for flexible timing"
     )
-    collection_type: str = Field(
-        default="home",
-        description="Service delivery type. Options: 'home' (default - home collection) or 'lab' (visit lab center)"
+    assessment_type: str = Field(
+        default="onsite",
+        description="Assessment delivery type. Options: 'onsite' (default - property visit) or 'office' (visit our office)"
     )
-    address: Optional[Union[str, Dict[str, str]]] = Field(
+    property_address: Optional[Union[str, Dict[str, str]]] = Field(
         default=None,
-        description="Collection address. Accepts: String format ('12, Barakhamba Road, New Delhi, Delhi - 110001'), Dictionary format ({'full_address': '...', 'landmark': '...', 'pin_code': '...'}), or None to prompt user for address"
+        description="Property address. Accepts: String format ('123 Main St, Dallas, TX 75001'), Dictionary format ({'full_address': '...', 'landmark': '...', 'zip_code': '...'}), or None to prompt user for address"
     )
 
-# Pydantic Schema for suggest_advanced_test_panel tool
-class SuggestTestPanelSchema(BaseModel):
-    """Schema for suggesting medical test panels based on health conditions"""
-    
-    condition_or_symptoms: str = Field(
-        description="Health condition or symptoms to find relevant tests for. Examples: 'diabetes', 'thyroid problems', 'heart disease', 'high cholesterol', 'liver function', 'kidney problems'"
+# Pydantic Schema for suggest_assessment_services tool
+class SuggestAssessmentServicesSchema(BaseModel):
+    """Schema for suggesting property assessment services based on property types and needs"""
+
+    property_type_or_issue: str = Field(
+        description="Property type or assessment issue to find relevant services for. Examples: 'residential', 'commercial', 'appeal dispute', 'exemption qualification', 'market analysis', 'tax protest'"
     )
-    age: Optional[int] = Field(
+    property_year: Optional[int] = Field(
         default=None,
-        description="Patient age in years (0-120) - helps suggest age-appropriate tests and reference ranges"
+        description="Property construction year - helps suggest appropriate assessment methods and comparable analysis"
     )
-    gender: Optional[str] = Field(
+    property_category: Optional[str] = Field(
         default=None,
-        description="Patient gender for gender-specific test recommendations. Options: 'male', 'female', 'M', 'F' (case insensitive)"
+        description="Property category for specialized assessments. Options: 'residential', 'commercial', 'industrial', 'agricultural' (case insensitive)"
     )
 
-# Pydantic Schema for schedule_sample_collection tool
-class ScheduleSampleCollectionSchema(BaseModel):
-    """Schema for scheduling sample collection appointments"""
-    
-    order_id: str = Field(description="Order ID to schedule collection for (format: KD20250827ABCD1234)")
+# Pydantic Schema for schedule_property_assessment tool
+class SchedulePropertyAssessmentSchema(BaseModel):
+    """Schema for scheduling property assessment appointments"""
+
+    assessment_id: str = Field(description="Assessment ID to schedule appointment for (format: CPT20250827ABCD1234)")
     preferred_date: str = Field(
-        description="Preferred collection date. Accepts: YYYY-MM-DD format ('2025-08-27'), natural language ('tomorrow', 'next Monday', 'August 30th')"
+        description="Preferred assessment date. Accepts: YYYY-MM-DD format ('2025-08-27'), natural language ('tomorrow', 'next Monday', 'August 30th')"
     )
     preferred_time: str = Field(
         description="Preferred time slot. Options: 'morning' (8AM-12PM), 'afternoon' (12PM-4PM), 'evening' (4PM-8PM), or specific times like '10:00 AM', '2:30 PM'"
     )
-    instagram_id: str = Field(description="Customer's Instagram ID for verification")
+    whatsapp_id: str = Field(description="Customer's WhatsApp ID for verification")
     special_instructions: Optional[str] = Field(
         default=None,
-        description="Special instructions for collection team (e.g., 'Ring doorbell twice', 'Call before arrival', 'Patient is elderly')"
+        description="Special instructions for assessment team (e.g., 'Gate code is 1234', 'Call before arrival', 'Property has guard dog')"
     )
 
-# Advanced Test Panels for Suggestions
-ADVANCED_TEST_PANELS = {
-    "diabetes": {
-        "panel_name": "Comprehensive Diabetes Profile",
-        "tests": ["HbA1c", "Fasting Glucose", "Post Prandial Glucose", "Insulin", "C-Peptide"],
+# Advanced Assessment Services for Suggestions
+ADVANCED_ASSESSMENT_SERVICES = {
+    "residential": {
+        "service_name": "Comprehensive Residential Assessment",
+        "assessments": ["Market Analysis", "Property Valuation", "Exemption Review", "Comparable Analysis", "Appeal Preparation"],
         "price": 1200,
         "discounted_price": 999,
-        "description": "Complete diabetes assessment with insulin resistance markers"
+        "description": "Complete residential property assessment with market analysis and appeal preparation"
     },
-    "cardiac": {
-        "panel_name": "Advanced Cardiac Health Panel", 
-        "tests": ["Lipid Profile", "Troponin I", "CRP", "Homocysteine", "ECG"],
+    "commercial": {
+        "service_name": "Advanced Commercial Assessment",
+        "assessments": ["Income Analysis", "Market Study", "Lease Review", "Comparable Sales", "Tax Optimization"],
         "price": 1800,
         "discounted_price": 1499,
-        "description": "Comprehensive heart health evaluation"
+        "description": "Comprehensive commercial property assessment and tax strategy"
     },
-    "thyroid": {
-        "panel_name": "Complete Thyroid Function Panel",
-        "tests": ["TSH", "T3", "T4", "Anti-TPO", "Anti-Thyroglobulin"],
+    "appeal": {
+        "service_name": "Complete Appeal Preparation Service",
+        "assessments": ["Evidence Gathering", "Comparable Analysis", "Market Research", "Documentation Review", "Hearing Representation"],
         "price": 1000,
         "discounted_price": 799,
-        "description": "Comprehensive thyroid function assessment"
+        "description": "Comprehensive property tax appeal preparation and representation"
     },
-    "liver": {
-        "panel_name": "Comprehensive Liver Function Panel",
-        "tests": ["SGPT", "SGOT", "Bilirubin", "ALP", "GGT", "Protein"],
+    "exemption": {
+        "service_name": "Comprehensive Exemption Analysis",
+        "assessments": ["Eligibility Review", "Documentation Prep", "Application Filing", "Status Tracking", "Compliance Monitoring"],
         "price": 800,
         "discounted_price": 649,
-        "description": "Complete liver health evaluation"
+        "description": "Complete property tax exemption qualification and application"
     },
-    "women_health": {
-        "panel_name": "Women's Health Comprehensive Panel",
-        "tests": ["CBC", "Thyroid Profile", "Vitamin D", "Iron Studies", "Hormonal Panel"],
+    "homestead": {
+        "service_name": "Homestead Exemption Comprehensive Service",
+        "assessments": ["Qualification Review", "Market Analysis", "Savings Calculation", "Application Processing", "Annual Monitoring"],
         "price": 2200,
         "discounted_price": 1799,
-        "description": "Complete health checkup designed for women"
+        "description": "Complete homestead exemption service for residential properties"
     },
-    "men_health": {
-        "panel_name": "Men's Health Comprehensive Panel", 
-        "tests": ["CBC", "Lipid Profile", "Liver Function", "Kidney Function", "Testosterone"],
+    "investment": {
+        "service_name": "Investment Property Tax Optimization",
+        "assessments": ["Portfolio Analysis", "Tax Strategy", "Depreciation Review", "Market Position", "Optimization Plan"],
         "price": 2000,
         "discounted_price": 1599,
-        "description": "Complete health checkup designed for men"
+        "description": "Complete tax optimization service designed for investment properties"
     }
 }
 
 
 @tool(parse_docstring=True)
-def validate_pin_code(pin_code: str) -> Dict[str, Any]:
+def validate_zip_code(zip_code: str) -> Dict[str, Any]:
     """
-    Validate if PIN code is serviceable for medical test collection and get area details.
-    
-    This tool checks if the provided PIN code is within our service coverage area
+    Validate if ZIP code is serviceable for property tax assessment and get area details.
+
+    This tool checks if the provided ZIP code is within our service coverage area
     and returns detailed information about service availability and area details.
-    
+
     Args:
-        pin_code: 6-digit PIN code to validate (e.g., '110001', '560001')
+        zip_code: 5-digit ZIP code to validate (e.g., '75001', '77001')
     """
     try:
-        logger.info(f"PIN validation started for: {pin_code}")
-        
-        # Clean PIN code
-        clean_pin = str(pin_code).strip()
-        logger.debug(f"Cleaned PIN code: '{clean_pin}' (length: {len(clean_pin)})")
-        
-        if len(clean_pin) != 6 or not clean_pin.isdigit():
-            print(f"❌ PIN VALIDATION DEBUG: Invalid format - Length={len(clean_pin)}, IsDigit={clean_pin.isdigit()}")
+        logger.info(f"ZIP validation started for: {zip_code}")
+
+        # Clean ZIP code
+        clean_zip = str(zip_code).strip()
+        logger.debug(f"Cleaned ZIP code: '{clean_zip}' (length: {len(clean_zip)})")
+
+        if len(clean_zip) != 5 or not clean_zip.isdigit():
+            print(f"❌ ZIP VALIDATION DEBUG: Invalid format - Length={len(clean_zip)}, IsDigit={clean_zip.isdigit()}")
             error_response = {
                 "success": False,
                 "serviceable": False,
-                "error": "Invalid PIN code format. Please provide a 6-digit PIN code.",
-                "pin_code": clean_pin
+                "error": "Invalid ZIP code format. Please provide a 5-digit ZIP code.",
+                "zip_code": clean_zip
             }
-            print(f"🔍 PIN VALIDATION DEBUG: Returning error response")
+            print(f"🔍 ZIP VALIDATION DEBUG: Returning error response")
             return error_response
-        
-        print(f"🔍 PIN VALIDATION DEBUG: Checking serviceable pins: {list(SERVICEABLE_PINS.keys())}")
-        
-        if clean_pin in SERVICEABLE_PINS:
-            area_info = SERVICEABLE_PINS[clean_pin]
-            print(f"✅ PIN VALIDATION DEBUG: Found serviceable! Area='{area_info['area']}'")
+
+        print(f"🔍 ZIP VALIDATION DEBUG: Checking serviceable zips: {list(SERVICEABLE_ZIPS.keys())}")
+
+        if clean_zip in SERVICEABLE_ZIPS:
+            area_info = SERVICEABLE_ZIPS[clean_zip]
+            print(f"✅ ZIP VALIDATION DEBUG: Found serviceable! Area='{area_info['area']}'")
             
             success_response = {
                 "success": True,
                 "serviceable": area_info["available"],
-                "pin_code": clean_pin,
+                "zip_code": clean_zip,
                 "area": area_info["area"],
-                "home_collection_available": area_info["home_collection"],
-                "message": f"Great! We provide services in {area_info['area']}. Home collection is {'available' if area_info['home_collection'] else 'not available'}."
+                "onsite_assessment_available": area_info["onsite_assessment"],
+                "message": f"Great! We provide services in {area_info['area']}. Onsite assessment is {'available' if area_info['onsite_assessment'] else 'not available'}."
             }
-            print(f"🔍 PIN VALIDATION DEBUG: Returning success response")
+            print(f"🔍 ZIP VALIDATION DEBUG: Returning success response")
             return success_response
         else:
-            print(f"⚠️ PIN VALIDATION DEBUG: PIN not serviceable")
+            print(f"⚠️ ZIP VALIDATION DEBUG: ZIP not serviceable")
             not_serviceable_response = {
                 "success": True,
                 "serviceable": False,
-                "pin_code": clean_pin,
-                "message": f"Sorry, we currently don't provide services in PIN code {clean_pin}. We are expanding and will reach your area soon!",
-                "alternative_message": "You can visit our nearest lab or try a different PIN code where you might want the sample collected."
+                "zip_code": clean_zip,
+                "message": f"Sorry, we currently don't provide services in ZIP code {clean_zip}. We are expanding and will reach your area soon!",
+                "alternative_message": "You can visit our nearest office or try a different ZIP code where you might want the assessment conducted."
             }
-            print(f"🔍 PIN VALIDATION DEBUG: Returning not serviceable response")
+            print(f"🔍 ZIP VALIDATION DEBUG: Returning not serviceable response")
             return not_serviceable_response
             
     except Exception as e:
-        print(f"❌ PIN VALIDATION DEBUG: EXCEPTION - {e}")
-        print(f"❌ PIN VALIDATION DEBUG: EXCEPTION TYPE - {type(e).__name__}")
+        print(f"❌ ZIP VALIDATION DEBUG: EXCEPTION - {e}")
+        print(f"❌ ZIP VALIDATION DEBUG: EXCEPTION TYPE - {type(e).__name__}")
         import traceback
         traceback.print_exc()
-        
+
         error_response = {
             "success": False,
             "serviceable": False,
-            "error": "Unable to validate PIN code at this time.",
-            "pin_code": pin_code,
+            "error": "Unable to validate ZIP code at this time.",
+            "zip_code": zip_code,
             "debug_error": str(e)
         }
-        print(f"🔍 PIN VALIDATION DEBUG: Returning exception response")
+        print(f"🔍 ZIP VALIDATION DEBUG: Returning exception response")
         return error_response
 
 
-@tool("suggest_advanced_test_panel", args_schema=SuggestTestPanelSchema, parse_docstring=True)
-def suggest_advanced_test_panel(
-    condition_or_symptoms: str,
-    age: Optional[int] = None,
-    gender: Optional[str] = None
+@tool("suggest_assessment_services", args_schema=SuggestAssessmentServicesSchema, parse_docstring=True)
+def suggest_assessment_services(
+    property_type_or_issue: str,
+    property_year: Optional[int] = None,
+    property_category: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Suggest comprehensive medical test panels based on health conditions, symptoms, or preventive health goals.
-    
-    This tool uses an intelligent recommendation system that combines predefined panels with 
-    database-driven test catalog searches to provide personalized test suggestions based on
-    patient demographics and medical conditions.
-    
+    Suggest comprehensive property assessment services based on property types, issues, or tax optimization goals.
+
+    This tool uses an intelligent recommendation system that combines predefined service packages with
+    database-driven service catalog searches to provide personalized assessment suggestions based on
+    property characteristics and tax situations.
+
     Args:
-        condition_or_symptoms: Health condition or symptoms - Examples: 'diabetes', 'thyroid', 'heart disease'
-        age: Patient age in years (0-120) for age-appropriate test selection
-        gender: Patient gender ('male'/'female'/'M'/'F') for gender-specific recommendations
+        property_type_or_issue: Property type or tax issue - Examples: 'residential', 'commercial', 'appeal dispute'
+        property_year: Property construction year for age-appropriate assessment methods
+        property_category: Property category ('residential'/'commercial'/'industrial'/'agricultural') for specialized assessments
     """
     try:
-        print(f"🔧 SUGGEST_PANEL DEBUG: condition_or_symptoms='{condition_or_symptoms}'")
-        print(f"🔧 SUGGEST_PANEL DEBUG: age={age}, gender={gender}")
-        
+        print(f"🔧 SUGGEST_SERVICES DEBUG: property_type_or_issue='{property_type_or_issue}'")
+        print(f"🔧 SUGGEST_SERVICES DEBUG: property_year={property_year}, property_category={property_category}")
+
         # Normalize input
-        condition_lower = condition_or_symptoms.lower()
-        print(f"🔧 SUGGEST_PANEL DEBUG: normalized condition='{condition_lower}'")
+        issue_lower = property_type_or_issue.lower()
+        print(f"🔧 SUGGEST_SERVICES DEBUG: normalized issue='{issue_lower}'")
         
         # Try database-driven approach first
-        async def _suggest_panel_async():
+        async def _suggest_services_async():
             async with get_db_session() as session:
                 assessment_service_repo = PropertyAssessmentServiceRepository(session)
-                
-                # Search for tests based on condition/symptoms
-                recommended_tests = []
+
+                # Search for services based on property type/issue
+                recommended_services = []
                 
                 # Map common conditions to search terms
                 condition_mappings = {

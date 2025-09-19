@@ -42,7 +42,7 @@ class MockRazorpayService:
         customer_name: str,
         customer_phone: str,
         customer_email: str = None,
-        description: str = "Payment for medical tests",
+        description: str = "Payment for property tax services",
         reference_id: str = None,
         callback_url: str = None,
         notes: Dict[str, str] = None
@@ -219,7 +219,7 @@ async def create_mock_razorpay_payment_link(
     customer_name: str,
     customer_phone: str,
     customer_email: str = None,
-    description: str = "Payment for medical tests"
+    description: str = "Payment for property tax services"
 ) -> Dict[str, Any]:
     """
     Create mock Razorpay payment link using ngrok URL.

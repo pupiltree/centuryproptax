@@ -105,7 +105,7 @@ class RazorpayService:
         customer_name: str,
         customer_phone: str,
         customer_email: str = None,
-        description: str = "Payment for medical tests",
+        description: str = "Payment for property tax services",
         reference_id: str = None,
         callback_url: str = None,
         notes: Dict[str, str] = None
@@ -132,7 +132,7 @@ class RazorpayService:
                     "email": bool(customer_email)
                 },
                 "reminder_enable": True,
-                "accept_partial": False,  # No partial payments for medical tests
+                "accept_partial": False,  # No partial payments for property tax services
                 "expire_by": int((datetime.now() + timedelta(hours=24)).timestamp())  # 24 hour expiry
             }
             
@@ -329,7 +329,7 @@ async def create_razorpay_payment_link(
     customer_name: str,
     customer_phone: str,
     customer_email: str = None,
-    description: str = "Payment for medical tests"
+    description: str = "Payment for property tax services"
 ) -> Dict[str, Any]:
     """
     Create a real Razorpay payment link with webhook verification.
