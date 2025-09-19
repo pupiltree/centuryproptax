@@ -136,8 +136,8 @@ async def business_health_check():
         # Test service catalog availability
         try:
             session = db_manager.get_session()
-            from services.persistence.repositories import TestCatalogRepository
-            catalog_repo = TestCatalogRepository(session)
+            from services.persistence.repositories import PropertyAssessmentServiceRepository
+            catalog_repo = PropertyAssessmentServiceRepository(session)
             
             catalog_check_start = datetime.now()
             service_count = len(await catalog_repo.search_tests("", limit=1))

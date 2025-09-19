@@ -20,8 +20,8 @@ from pydantic import BaseModel, Field
 from services.persistence.database import get_db_session
 from services.persistence.repositories import (
     CustomerRepository,
-    TestCatalogRepository, 
-    BookingRepository
+    PropertyAssessmentServiceRepository, 
+    PropertyAssessmentRequestRepository
 )
 from services.payments.razorpay_integration import create_razorpay_payment_link, verify_payment_completion
 from services.date_intelligence import parse_date_intelligently, get_current_time_info, validate_booking_constraints
@@ -264,7 +264,7 @@ def suggest_advanced_test_panel(
         # Try database-driven approach first
         async def _suggest_panel_async():
             async with get_db_session() as session:
-                test_catalog_repo = TestCatalogRepository(session)
+                assessment_service_repo = PropertyAssessmentServiceRepository(session)
                 
                 # Search for tests based on condition/symptoms
                 recommended_tests = []
@@ -553,9 +553,9 @@ async def _create_order_async(
         
         # Database-driven test validation and pricing
         async with get_db_session() as session:
-            test_catalog_repo = TestCatalogRepository(session)
+            assessment_service_repo = PropertyAssessmentServiceRepository(session)
             customer_repo = CustomerRepository(session)
-            booking_repo = BookingRepository(session)
+            assessment_request_repo = PropertyAssessmentRequestRepository(session)
             
             validated_tests = []
             total_amount = 0
@@ -699,7 +699,7 @@ async def _create_order_async(
                             processed_address = address
                             print(f"🔧 CREATE_ORDER DEBUG: Using provided address dict: {processed_address}")
                     
-                    booking = await booking_repo.create_booking(
+                    booking = await assessment_request_repo.create_booking(
                         customer_id=customer.id,
                         test_id=test_record.id,
                         booking_id=booking_id,
@@ -1024,10 +1024,10 @@ async def check_report_status(
         
         async with get_db_session() as session:
             customer_repo = CustomerRepository(session)
-            booking_repo = BookingRepository(session)
+            assessment_request_repo = PropertyAssessmentRequestRepository(session)
             
             # First, try to find booking by booking_id
-            booking = await booking_repo.get_by_booking_id(booking_id)
+            booking = await assessment_request_repo.get_by_booking_id(booking_id)
             
             if not booking:
                 return {
@@ -1120,7 +1120,7 @@ async def confirm_order_cash_payment(
     try:
         async with get_db_session() as session:
             customer_repo = CustomerRepository(session)
-            booking_repo = BookingRepository(session)
+            assessment_request_repo = PropertyAssessmentRequestRepository(session)
             
             customer = await customer_repo.get_by_instagram_id(instagram_id)
             if not customer:
@@ -1130,7 +1130,7 @@ async def confirm_order_cash_payment(
                 }
             
             # Get bookings for this order (assuming order_id pattern)
-            bookings = await booking_repo.get_customer_bookings(customer.id)
+            bookings = await assessment_request_repo.get_customer_bookings(customer.id)
             order_bookings = [b for b in bookings if order_id in b.booking_id]
             
             if not order_bookings:
