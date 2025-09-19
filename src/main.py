@@ -99,9 +99,9 @@ except ImportError as e:
 async def startup_event():
     """Application startup."""
     logger.info("🚀 Starting Intelligent Business Assistant")
-    logger.info(f"📱 IG_TOKEN: {'✅ Configured' if os.getenv('IG_TOKEN') else '❌ Missing'}")
-    logger.info(f"🆔 IG_USER_ID: {os.getenv('IG_USER_ID')}")
-    logger.info(f"🔐 VERIFY_TOKEN: {'✅ Configured' if os.getenv('VERIFY_TOKEN') else '❌ Missing'}")
+    logger.info(f"📱 WhatsApp Token: {'✅ Configured' if os.getenv('WA_ACCESS_TOKEN') else '❌ Missing'}")
+    logger.info(f"📞 WhatsApp Phone: {os.getenv('WA_PHONE_NUMBER_ID')}")
+    logger.info(f"🔐 VERIFY_TOKEN: {'✅ Configured' if os.getenv('WA_VERIFY_TOKEN') else '❌ Missing'}")
     
     # Initialize database tables (including ticket tables)
     try:
@@ -172,12 +172,17 @@ async def root():
 
 
 @app.get("/test")
-async def test_instagram_api():
-    """Test Instagram API configuration."""
-    from services.messaging.instagram_api import get_account_info
-    
-    result = await get_account_info()
-    return result
+async def test_whatsapp_api():
+    """Test WhatsApp API configuration."""
+    from services.messaging.whatsapp_client import get_whatsapp_client
+
+    client = get_whatsapp_client()
+    return {
+        "configured": client.is_configured(),
+        "phone_number_id": client.phone_number_id,
+        "business_account_id": client.business_account_id,
+        "status": "WhatsApp Business API ready" if client.is_configured() else "WhatsApp not configured"
+    }
 
 
 @app.exception_handler(Exception)
@@ -199,15 +204,15 @@ if __name__ == "__main__":
     # Create logs directory
     os.makedirs("logs", exist_ok=True)
     
-    logger.info("📋 Starting Krsnaa Diagnostics AI Chatbot...")
+    logger.info("📋 Starting Century Property Tax AI Assistant...")
     logger.info("📍 Production Endpoints:")
-    logger.info("   GET  /webhook - Instagram webhook verification (integrated)")
-    logger.info("   POST /webhook - Instagram message handler (simplified + batching)")
+    logger.info("   GET  /webhook - WhatsApp webhook verification")
+    logger.info("   POST /webhook - WhatsApp message handler")
     logger.info("   GET  /health - Health check with statistics")
     logger.info("   GET  /stats - Detailed system statistics")
-    logger.info("   GET  /test - Test Instagram API")
+    logger.info("   GET  /test - Test WhatsApp API")
     logger.info("")
-    logger.info("📍 Single Production Endpoint - Clean Architecture")
+    logger.info("📍 WhatsApp Business API - Property Tax Focus")
     
     uvicorn.run(
         "src.main:app",

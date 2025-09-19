@@ -10,11 +10,10 @@ import structlog
 from typing import Optional, Dict, Any
 from datetime import datetime
 
-from services.messaging.instagram_types import InstagramMessage
-from services.messaging.instagram_api import send_reply
+from services.messaging.whatsapp_client import get_whatsapp_client
 from services.messaging.message_batching import message_batcher
-# Use workflow-compliant healthcare assistant
-from agents.core.healthcare_assistant_v3 import process_healthcare_message
+# Use workflow-compliant property tax assistant
+from agents.core.property_tax_assistant_v3 import process_property_tax_message
 from config.settings import settings
 
 logger = structlog.get_logger()
@@ -117,9 +116,8 @@ class UniversalMessageHandler:
                     message = self._parse_messaging_event(messaging_event)
                     if message:
                         # Skip business account messages (prevent loops)
-                        if message.sender_id == settings.ig_user_id:
-                            self.logger.info("Ignoring business account message")
-                            continue
+                        # For WhatsApp, this check is handled in the WhatsApp client
+                        # No action needed here
                             
                         await message_batcher.process_message(message)
             
@@ -225,7 +223,7 @@ class UniversalMessageHandler:
                 return
             
             # Process with workflow-compliant healthcare assistant
-            response = await process_healthcare_message(
+            response = await process_property_tax_message(
                 message=message_text,
                 session_id=session_id,
                 customer_id=message.sender_id
@@ -239,9 +237,10 @@ class UniversalMessageHandler:
             
             # Fallback response
             try:
-                await send_reply(
+                whatsapp_client = get_whatsapp_client()
+                await whatsapp_client.send_text_message(
                     message.sender_id,
-                    "I'm here to help you with our services. How can I assist you today?"
+                    "I'm here to help you with property tax inquiries. How can I assist you today?"
                 )
             except Exception as send_error:
                 self.logger.error(f"Failed to send fallback message: {send_error}")
@@ -337,16 +336,12 @@ class UniversalMessageHandler:
     async def _send_response(self, recipient_id: str, response: Dict[str, Any]):
         """Send response to customer."""
         try:
-            # Skip business account messages in production
-            import os
-            dev_mode = os.getenv("ALLOW_BUSINESS_ACCOUNT_REPLIES", "false").lower() == "true"
-            
-            if recipient_id == settings.ig_user_id and not dev_mode:
-                self.logger.warning(f"Skipping message to business account: {recipient_id}")
-                return
+            # Business account message handling is done in WhatsApp client
+            # No additional checks needed here
             
             # Send message
-            await send_reply(recipient_id, response["text"])
+            whatsapp_client = get_whatsapp_client()
+            await whatsapp_client.send_text_message(recipient_id, response["text"])
             
             self.logger.info(
                 "Response sent successfully",

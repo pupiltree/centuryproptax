@@ -186,10 +186,10 @@ async def business_health_check():
         health_status["status"] = "degraded"
     
     # Environment configuration check
-    required_vars = ["IG_TOKEN", "IG_USER_ID", "VERIFY_TOKEN", "GOOGLE_API_KEY"]
+    required_vars = ["WA_ACCESS_TOKEN", "WA_PHONE_NUMBER_ID", "WA_VERIFY_TOKEN", "GOOGLE_API_KEY"]
     env_status = "healthy"
     missing_vars = []
-    
+
     for var in required_vars:
         if not os.getenv(var):
             missing_vars.append(var)

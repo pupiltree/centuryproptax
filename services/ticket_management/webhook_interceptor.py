@@ -10,7 +10,7 @@ from datetime import datetime
 
 from services.ticket_management.ticket_service import get_ticket_service
 from services.persistence.database import get_db_session
-from services.messaging.instagram_api import send_reply
+from services.messaging.whatsapp_client import get_whatsapp_client
 
 logger = structlog.get_logger()
 
@@ -127,7 +127,8 @@ class WebhookInterceptor:
                 agent_response = await self.get_agent_response(instagram_id)
                 if not agent_response:
                     # Send acknowledgment to customer
-                    await send_reply(
+                    whatsapp_client = get_whatsapp_client()
+                    await whatsapp_client.send_text_message(
                         instagram_id,
                         f"Your message has been received. A support agent is reviewing your ticket {ticket_id}. Please wait for their response."
                     )
@@ -186,7 +187,8 @@ class WebhookInterceptor:
             
             if response_data:
                 # Send message to customer
-                await send_reply(
+                whatsapp_client = get_whatsapp_client()
+                await whatsapp_client.send_text_message(
                     instagram_id,
                     response_data["message"]
                 )
