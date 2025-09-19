@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Century Property Tax - AI Demo Interface</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/css/demo_styles.css" rel="stylesheet">
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Demo Header -->
+    <header class="bg-blue-900 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-3">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-2xl font-bold">Century Property Tax</h1>
+                    <span class="bg-green-500 text-xs px-2 py-1 rounded-full">DEMO ENVIRONMENT</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="demo-status-indicator">
+                        <i class="fas fa-circle text-green-400"></i>
+                        <span class="text-sm">Demo Active</span>
+                    </div>
+                    <button id="reset-demo-btn" class="bg-red-600 hover:bg-red-700 px-3 py-1 rounded text-sm transition-colors">
+                        <i class="fas fa-refresh mr-1"></i>Reset Demo
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Demo Control Panel -->
+    <div class="bg-white border-b border-gray-200 shadow-sm">
+        <div class="container mx-auto px-4 py-2">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-6">
+                    <!-- Scenario Selector -->
+                    <div class="flex items-center space-x-2">
+                        <label class="text-sm font-medium text-gray-700">Scenario:</label>
+                        <select id="scenario-selector" class="border border-gray-300 rounded px-3 py-1 text-sm">
+                            <option value="">Select Demo Scenario</option>
+                            <option value="basic_inquiry">Basic Property Inquiry</option>
+                            <option value="payment_processing">Payment Processing</option>
+                            <option value="assessment_appeals">Assessment Appeals</option>
+                            <option value="exemption_applications">Exemption Applications</option>
+                            <option value="multi_property">Multi-Property Portfolio</option>
+                            <option value="escalation_scenarios">Escalation Scenarios</option>
+                        </select>
+                    </div>
+
+                    <!-- Persona Selector -->
+                    <div class="flex items-center space-x-2">
+                        <label class="text-sm font-medium text-gray-700">Persona:</label>
+                        <select id="persona-selector" class="border border-gray-300 rounded px-3 py-1 text-sm">
+                            <option value="">Auto-Select</option>
+                            <option value="sarah_first_time">Sarah (First-Time Owner)</option>
+                            <option value="mike_young_family">Mike & Jessica (Young Family)</option>
+                            <option value="david_investor">David (Real Estate Investor)</option>
+                            <option value="mary_retired">Mary (Retired Senior)</option>
+                            <option value="robert_business">Robert (Business Owner)</option>
+                            <option value="john_farmer">John (Rancher)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Performance Metrics -->
+                <div class="flex items-center space-x-4 text-sm">
+                    <div class="flex items-center space-x-1">
+                        <i class="fas fa-clock text-blue-500"></i>
+                        <span>Response: <span id="response-time">--</span>ms</span>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                        <i class="fas fa-chart-line text-green-500"></i>
+                        <span>Accuracy: <span id="accuracy-score">--</span>%</span>
+                    </div>
+                    <div class="flex items-center space-x-1">
+                        <i class="fas fa-comments text-purple-500"></i>
+                        <span>Turn: <span id="conversation-turn">0</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Chat Interface -->
+    <div class="container mx-auto px-4 py-6">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Chat Area -->
+            <div class="lg:col-span-3">
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <!-- Chat Header -->
+                    <div class="bg-blue-600 text-white px-6 py-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h2 class="text-lg font-semibold">Property Tax AI Assistant</h2>
+                                <p class="text-blue-100 text-sm">Ask about property taxes, payments, appeals, and exemptions</p>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm text-blue-100">Demo Session</div>
+                                <div class="text-xs text-blue-200" id="session-timer">00:00</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chat Messages -->
+                    <div id="chat-messages" class="h-96 overflow-y-auto p-6 space-y-4 bg-gray-50">
+                        <!-- Welcome Message -->
+                        <div class="flex items-start space-x-3">
+                            <div class="flex-shrink-0 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                                <i class="fas fa-robot text-white text-sm"></i>
+                            </div>
+                            <div class="bg-white rounded-lg p-4 shadow-sm max-w-md">
+                                <p class="text-gray-800">Hello! I'm your Property Tax AI Assistant. I can help you with property tax questions, payment options, assessment appeals, exemption applications, and more. What would you like to know?</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input Area -->
+                    <div class="border-t border-gray-200 p-4 bg-white">
+                        <div class="flex space-x-3">
+                            <input
+                                id="message-input"
+                                type="text"
+                                placeholder="Type your property tax question here..."
+                                class="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            >
+                            <button
+                                id="send-button"
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
+                            >
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+
+                        <!-- Quick Action Buttons -->
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            <button class="quick-action-btn" data-message="What's my property tax amount for 123 Main St, Austin?">
+                                Property Tax Amount
+                            </button>
+                            <button class="quick-action-btn" data-message="How do I pay my property taxes online?">
+                                Online Payment
+                            </button>
+                            <button class="quick-action-btn" data-message="I want to appeal my property assessment">
+                                Appeal Assessment
+                            </button>
+                            <button class="quick-action-btn" data-message="How do I apply for homestead exemption?">
+                                Homestead Exemption
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Side Panel -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Current Scenario Info -->
+                <div class="bg-white rounded-lg shadow-lg p-4">
+                    <h3 class="font-semibold text-gray-800 mb-3">
+                        <i class="fas fa-play-circle text-blue-500 mr-2"></i>Current Scenario
+                    </h3>
+                    <div id="scenario-info">
+                        <p class="text-sm text-gray-600">No scenario selected. Choose from the dropdown above to start a guided demo.</p>
+                    </div>
+                </div>
+
+                <!-- Demo Progress -->
+                <div class="bg-white rounded-lg shadow-lg p-4">
+                    <h3 class="font-semibold text-gray-800 mb-3">
+                        <i class="fas fa-tasks text-green-500 mr-2"></i>Demo Progress
+                    </h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span>Scenario Steps</span>
+                            <span id="progress-steps">0/0</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div id="progress-bar" class="bg-green-500 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <div class="text-xs text-gray-500" id="progress-description">
+                            Select a scenario to begin
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Metrics -->
+                <div class="bg-white rounded-lg shadow-lg p-4">
+                    <h3 class="font-semibold text-gray-800 mb-3">
+                        <i class="fas fa-chart-bar text-purple-500 mr-2"></i>Performance
+                    </h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Avg Response Time</span>
+                            <span class="text-sm font-medium" id="avg-response-time">--ms</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Accuracy Score</span>
+                            <span class="text-sm font-medium" id="avg-accuracy">--%</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">Resolution Rate</span>
+                            <span class="text-sm font-medium" id="resolution-rate">--%</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">User Satisfaction</span>
+                            <div class="flex space-x-1">
+                                <i class="fas fa-star text-yellow-400"></i>
+                                <span class="text-sm font-medium" id="satisfaction-score">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Demo Controls -->
+                <div class="bg-white rounded-lg shadow-lg p-4">
+                    <h3 class="font-semibold text-gray-800 mb-3">
+                        <i class="fas fa-cog text-gray-500 mr-2"></i>Demo Controls
+                    </h3>
+                    <div class="space-y-3">
+                        <button id="auto-play-btn" class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded text-sm transition-colors">
+                            <i class="fas fa-play mr-2"></i>Auto-Play Scenario
+                        </button>
+                        <button id="skip-step-btn" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white py-2 px-4 rounded text-sm transition-colors">
+                            <i class="fas fa-forward mr-2"></i>Skip Step
+                        </button>
+                        <button id="restart-scenario-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded text-sm transition-colors">
+                            <i class="fas fa-redo mr-2"></i>Restart Scenario
+                        </button>
+                        <button id="export-transcript-btn" class="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded text-sm transition-colors">
+                            <i class="fas fa-download mr-2"></i>Export Transcript
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Demo Notes -->
+                <div class="bg-white rounded-lg shadow-lg p-4">
+                    <h3 class="font-semibold text-gray-800 mb-3">
+                        <i class="fas fa-sticky-note text-orange-500 mr-2"></i>Demo Notes
+                    </h3>
+                    <div id="demo-notes" class="text-sm text-gray-600">
+                        <p>This interface showcases the AI assistant's capabilities for property tax support. Key features to highlight during demos:</p>
+                        <ul class="mt-2 space-y-1 text-xs">
+                            <li>• Natural language understanding</li>
+                            <li>• Property-specific information lookup</li>
+                            <li>• Payment processing guidance</li>
+                            <li>• Assessment appeal support</li>
+                            <li>• Multi-property portfolio management</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Demo Status Modal -->
+    <div id="demo-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 class="text-lg font-semibold mb-4" id="modal-title">Demo Status</h3>
+            <p class="text-gray-600 mb-4" id="modal-message">Processing...</p>
+            <div class="flex justify-end space-x-3">
+                <button id="modal-cancel" class="px-4 py-2 text-gray-600 hover:text-gray-800">Cancel</button>
+                <button id="modal-confirm" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="/static/js/demo_controls.js"></script>
+    <script>
+        // Initialize demo interface
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDemoInterface();
+        });
+    </script>
+</body>
+</html>
