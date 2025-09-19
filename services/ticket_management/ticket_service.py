@@ -51,7 +51,10 @@ class TicketService:
         customer_phone: Optional[str] = None,
         category: Optional[TicketCategory] = None,
         priority: Optional[TicketPriority] = None,
-        order_id: Optional[str] = None,
+        property_parcel_id: Optional[str] = None,
+        assessment_year: Optional[int] = None,
+        assessment_id: Optional[str] = None,
+        appeal_id: Optional[str] = None,
         payment_id: Optional[str] = None,
         conversation_context: Optional[Dict] = None
     ) -> SupportTicket:
@@ -67,7 +70,10 @@ class TicketService:
             customer_phone: Customer phone
             category: Ticket category
             priority: Ticket priority
-            order_id: Related order ID
+            property_parcel_id: Related property parcel ID
+            assessment_year: Related assessment year
+            assessment_id: Related assessment ID
+            appeal_id: Related appeal ID
             payment_id: Related payment ID
             conversation_context: Previous conversation history
             
@@ -94,7 +100,10 @@ class TicketService:
                 description=description,
                 category=category,
                 priority=priority,
-                order_id=order_id,
+                property_parcel_id=property_parcel_id,
+                assessment_year=assessment_year,
+                assessment_id=assessment_id,
+                appeal_id=appeal_id,
                 payment_id=payment_id,
                 conversation_context=json.dumps(conversation_context) if conversation_context else None,
                 status=TicketStatus.OPEN
@@ -134,36 +143,54 @@ class TicketService:
             raise
     
     def _determine_category(self, subject: str, description: str) -> TicketCategory:
-        """Determine ticket category based on content."""
+        """Determine ticket category based on property tax content."""
         content = f"{subject} {description}".lower()
-        
-        if any(word in content for word in ["payment", "debit", "charge", "refund", "money"]):
+
+        if any(word in content for word in ["payment", "pay", "bill", "charge", "refund", "money", "installment"]):
             return TicketCategory.PAYMENT_ISSUE
-        elif any(word in content for word in ["booking", "appointment", "schedule", "cancel"]):
-            return TicketCategory.BOOKING_ISSUE
-        elif any(word in content for word in ["test", "package", "price", "cost"]):
-            return TicketCategory.TEST_INQUIRY
-        elif any(word in content for word in ["report", "result", "download"]):
-            return TicketCategory.REPORT_ISSUE
-        elif any(word in content for word in ["error", "bug", "not working", "issue"]):
+        elif any(word in content for word in ["appeal", "dispute", "challenge", "disagree", "unfair", "contest"]):
+            return TicketCategory.APPEAL_PROCESS
+        elif any(word in content for word in ["assessment", "assessed", "value", "valuation", "appraisal"]):
+            return TicketCategory.ASSESSMENT_QUESTION
+        elif any(word in content for word in ["tax", "calculate", "calculation", "rate", "amount", "how much"]):
+            return TicketCategory.TAX_CALCULATION
+        elif any(word in content for word in ["property", "address", "parcel", "ownership", "deed"]):
+            return TicketCategory.PROPERTY_INFO
+        elif any(word in content for word in ["exemption", "exempt", "senior", "disabled", "veteran", "homestead"]):
+            return TicketCategory.EXEMPTION_REQUEST
+        elif any(word in content for word in ["document", "certificate", "copy", "record", "statement"]):
+            return TicketCategory.DOCUMENT_REQUEST
+        elif any(word in content for word in ["bill", "billing", "invoice", "statement", "notice"]):
+            return TicketCategory.BILLING_INQUIRY
+        elif any(word in content for word in ["deadline", "extension", "late", "due date", "time"]):
+            return TicketCategory.DEADLINE_EXTENSION
+        elif any(word in content for word in ["error", "bug", "not working", "technical", "website", "portal"]):
             return TicketCategory.TECHNICAL_ISSUE
         else:
             return TicketCategory.GENERAL_COMPLAINT
     
     def _determine_priority(self, subject: str, description: str, category: TicketCategory) -> TicketPriority:
-        """Determine ticket priority based on content and category."""
+        """Determine ticket priority based on property tax content and category."""
         content = f"{subject} {description}".lower()
-        
-        # Payment issues are usually high priority
-        if category == TicketCategory.PAYMENT_ISSUE:
-            if any(word in content for word in ["urgent", "immediately", "asap"]):
+
+        # High priority categories for property tax
+        if category == TicketCategory.DEADLINE_EXTENSION:
+            if any(word in content for word in ["tomorrow", "today", "urgent", "deadline"]):
                 return TicketPriority.URGENT
             return TicketPriority.HIGH
-        
+        elif category == TicketCategory.APPEAL_PROCESS:
+            if any(word in content for word in ["deadline", "due", "urgent", "hearing"]):
+                return TicketPriority.HIGH
+            return TicketPriority.MEDIUM
+        elif category == TicketCategory.PAYMENT_ISSUE:
+            if any(word in content for word in ["urgent", "immediately", "asap", "penalty", "late fee"]):
+                return TicketPriority.URGENT
+            return TicketPriority.HIGH
+
         # Check for urgency keywords
-        if any(word in content for word in ["urgent", "emergency", "critical"]):
+        if any(word in content for word in ["urgent", "emergency", "critical", "asap"]):
             return TicketPriority.URGENT
-        elif any(word in content for word in ["important", "soon", "quickly"]):
+        elif any(word in content for word in ["important", "soon", "quickly", "deadline"]):
             return TicketPriority.HIGH
         else:
             return TicketPriority.MEDIUM

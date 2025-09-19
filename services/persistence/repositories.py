@@ -13,7 +13,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from .database import (
-    CustomerProfile, TestCatalog, TestBooking, MessageHistory
+    CustomerProfile, PropertyAssessmentService, PropertyAssessmentRequest, MessageHistory,
+    Property, PropertyOwner, TaxAssessment, Appeal, Payment, TaxBill
 )
 
 logger = structlog.get_logger()
@@ -60,22 +61,22 @@ class CustomerRepository:
         try:
             # Check if customer exists
             existing = await self.get_by_instagram_id(instagram_id)
-            
+
             if existing:
                 # Update existing customer
                 for key, value in profile_data.items():
                     if value is not None and hasattr(existing, key):
                         setattr(existing, key, value)
-                
+
                 existing.last_interaction = datetime.utcnow()
                 existing.conversation_count += 1
-                
+
                 await self.session.commit()
                 await self.session.refresh(existing)
-                
-                self.logger.info(f"Customer updated: {instagram_id}")
+
+                self.logger.info(f"Property tax customer updated: {instagram_id}")
                 return existing
-            
+
             else:
                 # Create new customer
                 new_customer = CustomerProfile(
@@ -84,12 +85,12 @@ class CustomerRepository:
                     conversation_count=1,
                     **profile_data
                 )
-                
+
                 self.session.add(new_customer)
                 await self.session.commit()
                 await self.session.refresh(new_customer)
-                
-                self.logger.info(f"Customer created: {instagram_id}")
+
+                self.logger.info(f"Property tax customer created: {instagram_id}")
                 return new_customer
                 
         except Exception as e:
@@ -97,43 +98,45 @@ class CustomerRepository:
             self.logger.error(f"Failed to create/update customer: {e}")
             raise
     
-    async def update_medical_info(
+    async def update_property_info(
         self,
         instagram_id: str,
-        medical_conditions: Optional[List[str]] = None,
-        medications: Optional[List[str]] = None,
-        allergies: Optional[List[str]] = None,
+        owned_properties: Optional[List[str]] = None,
+        primary_property_parcel: Optional[str] = None,
+        property_ownership_type: Optional[str] = None,
+        zip_code: Optional[str] = None,
+        county: Optional[str] = None,
     ) -> Optional[CustomerProfile]:
-        """Update customer medical information."""
+        """Update customer property ownership information."""
         try:
             customer = await self.get_by_instagram_id(instagram_id)
             if not customer:
                 return None
-            
-            if medical_conditions is not None:
-                customer.medical_conditions = {
-                    "conditions": medical_conditions,
-                    "updated_at": datetime.utcnow().isoformat()
-                }
-            
-            if medications is not None:
-                customer.medications = {
-                    "medications": medications,
-                    "updated_at": datetime.utcnow().isoformat()
-                }
-            
-            if allergies is not None:
-                customer.allergies = allergies
-            
+
+            if owned_properties is not None:
+                customer.owned_properties = owned_properties
+
+            if primary_property_parcel is not None:
+                customer.primary_property_parcel = primary_property_parcel
+
+            if property_ownership_type is not None:
+                customer.property_ownership_type = property_ownership_type
+
+            if zip_code is not None:
+                customer.zip_code = zip_code
+
+            if county is not None:
+                customer.county = county
+
             await self.session.commit()
             await self.session.refresh(customer)
-            
-            self.logger.info(f"Medical info updated for customer: {instagram_id}")
+
+            self.logger.info(f"Property info updated for customer: {instagram_id}")
             return customer
-            
+
         except Exception as e:
             await self.session.rollback()
-            self.logger.error(f"Failed to update medical info: {e}")
+            self.logger.error(f"Failed to update property info: {e}")
             return None
     
     async def get_recent_customers(self, limit: int = 50) -> List[CustomerProfile]:
@@ -158,275 +161,282 @@ class CustomerRepository:
             return None
 
 
-class TestCatalogRepository:
-    """Repository for test catalog operations."""
-    
+class PropertyAssessmentServiceRepository:
+    """Repository for property assessment service operations."""
+
     def __init__(self, session: AsyncSession):
         self.session = session
-        self.logger = logger.bind(component="test_catalog_repository")
-    
-    async def search_tests(
+        self.logger = logger.bind(component="property_assessment_service_repository")
+
+    async def search_services(
         self,
         query: str,
         category: Optional[str] = None,
         available_only: bool = True,
         limit: int = 20
-    ) -> List[TestCatalog]:
-        """Search tests by name, description, or includes."""
+    ) -> List[PropertyAssessmentService]:
+        """Search services by name, description, or requirements."""
         try:
             # Build search conditions
             search_conditions = []
-            
+
             if query:
                 query_lower = f"%{query.lower()}%"
                 search_conditions.append(
                     or_(
-                        func.lower(TestCatalog.name).like(query_lower),
-                        func.lower(TestCatalog.description).like(query_lower),
-                        func.json_extract(TestCatalog.includes, '$').like(f'%{query.lower()}%')  # JSON search
+                        func.lower(PropertyAssessmentService.name).like(query_lower),
+                        func.lower(PropertyAssessmentService.description).like(query_lower),
+                        func.json_extract(PropertyAssessmentService.requirements, '$').like(f'%{query.lower()}%')  # JSON search
                     )
                 )
-            
+
             if category:
-                search_conditions.append(TestCatalog.category == category)
-            
+                search_conditions.append(PropertyAssessmentService.category == category)
+
             if available_only:
-                search_conditions.append(TestCatalog.available == True)
-            
+                search_conditions.append(PropertyAssessmentService.available == True)
+
             # Execute query
-            stmt = select(TestCatalog)
+            stmt = select(PropertyAssessmentService)
             if search_conditions:
                 stmt = stmt.where(and_(*search_conditions))
-            
-            stmt = stmt.order_by(TestCatalog.name).limit(limit)
-            
+
+            stmt = stmt.order_by(PropertyAssessmentService.name).limit(limit)
+
             result = await self.session.execute(stmt)
             return list(result.scalars().all())
-            
+
         except Exception as e:
-            self.logger.error(f"Failed to search tests: {e}")
+            self.logger.error(f"Failed to search services: {e}")
             return []
-    
-    async def get_by_code(self, test_code: str) -> Optional[TestCatalog]:
-        """Get test by test code."""
+
+    async def get_by_code(self, service_code: str) -> Optional[PropertyAssessmentService]:
+        """Get service by service code."""
         try:
             result = await self.session.execute(
-                select(TestCatalog)
-                .where(TestCatalog.test_code == test_code)
+                select(PropertyAssessmentService)
+                .where(PropertyAssessmentService.service_code == service_code)
             )
             return result.scalar_one_or_none()
         except Exception as e:
-            self.logger.error(f"Failed to get test by code: {e}")
+            self.logger.error(f"Failed to get service by code: {e}")
             return None
-    
-    async def get_by_category(self, category: str) -> List[TestCatalog]:
-        """Get all tests in a category."""
+
+    async def get_by_category(self, category: str) -> List[PropertyAssessmentService]:
+        """Get all services in a category."""
         try:
             result = await self.session.execute(
-                select(TestCatalog)
+                select(PropertyAssessmentService)
                 .where(
                     and_(
-                        TestCatalog.category == category,
-                        TestCatalog.available == True
+                        PropertyAssessmentService.category == category,
+                        PropertyAssessmentService.available == True
                     )
                 )
-                .order_by(TestCatalog.name)
+                .order_by(PropertyAssessmentService.name)
             )
             return list(result.scalars().all())
         except Exception as e:
-            self.logger.error(f"Failed to get tests by category: {e}")
+            self.logger.error(f"Failed to get services by category: {e}")
             return []
-    
-    async def get_recommended_for_condition(
+
+    async def get_applicable_for_property_type(
         self,
-        condition: str,
+        property_type: str,
         limit: int = 10
-    ) -> List[TestCatalog]:
-        """Get tests recommended for a medical condition."""
+    ) -> List[PropertyAssessmentService]:
+        """Get services applicable for a property type."""
         try:
             result = await self.session.execute(
-                select(TestCatalog)
+                select(PropertyAssessmentService)
                 .where(
                     and_(
-                        func.json_extract(TestCatalog.conditions_recommended_for, '$').like(f'%{condition.lower()}%'),
-                        TestCatalog.available == True
+                        func.json_extract(PropertyAssessmentService.property_types_applicable, '$').like(f'%{property_type.lower()}%'),
+                        PropertyAssessmentService.available == True
                     )
                 )
-                .order_by(TestCatalog.price)  # Order by price ascending
+                .order_by(PropertyAssessmentService.fee)  # Order by fee ascending
                 .limit(limit)
             )
             return list(result.scalars().all())
         except Exception as e:
-            self.logger.error(f"Failed to get recommended tests: {e}")
+            self.logger.error(f"Failed to get applicable services: {e}")
             return []
 
 
-class BookingRepository:
-    """Repository for booking operations."""
-    
+class PropertyAssessmentRequestRepository:
+    """Repository for property assessment request operations."""
+
     def __init__(self, session: AsyncSession):
         self.session = session
-        self.logger = logger.bind(component="booking_repository")
-    
-    async def create_booking(
+        self.logger = logger.bind(component="property_assessment_request_repository")
+
+    async def create_request(
         self,
         customer_id: int,
-        test_id: int,
-        booking_id: str,
+        service_id: int,
+        request_id: str,
         total_amount: Decimal,
+        description: str,
+        request_type: str,
+        property_parcel_id: Optional[str] = None,
         preferred_date: Optional[date] = None,
         preferred_time: Optional[str] = None,
-        collection_type: str = "home",
-        collection_address: Optional[Dict[str, Any]] = None,
-    ) -> TestBooking:
-        """Create a new booking."""
+        delivery_method: str = "online",
+        delivery_address: Optional[Dict[str, Any]] = None,
+        urgency_level: str = "normal",
+    ) -> PropertyAssessmentRequest:
+        """Create a new property assessment request."""
         try:
-            booking = TestBooking(
-                booking_id=booking_id,
+            request = PropertyAssessmentRequest(
+                request_id=request_id,
                 customer_id=customer_id,
-                test_id=test_id,
+                service_id=service_id,
+                description=description,
+                request_type=request_type,
+                property_parcel_id=property_parcel_id,
                 total_amount=total_amount,
                 preferred_date=preferred_date,
                 preferred_time=preferred_time,
-                collection_type=collection_type,
-                collection_address=collection_address,
+                delivery_method=delivery_method,
+                delivery_address=delivery_address,
+                urgency_level=urgency_level,
                 status="pending",
                 payment_status="pending",
             )
-            
-            self.session.add(booking)
+
+            self.session.add(request)
             await self.session.commit()
-            await self.session.refresh(booking)
-            
-            self.logger.info(f"Booking created: {booking_id}")
-            return booking
-            
+            await self.session.refresh(request)
+
+            self.logger.info(f"Property assessment request created: {request_id}")
+            return request
+
         except Exception as e:
             await self.session.rollback()
-            self.logger.error(f"Failed to create booking: {e}")
+            self.logger.error(f"Failed to create request: {e}")
             raise
-    
-    async def get_by_booking_id(self, booking_id: str) -> Optional[TestBooking]:
-        """Get booking by booking ID."""
+
+    async def get_by_request_id(self, request_id: str) -> Optional[PropertyAssessmentRequest]:
+        """Get request by request ID."""
         try:
             result = await self.session.execute(
-                select(TestBooking)
+                select(PropertyAssessmentRequest)
                 .options(
-                    selectinload(TestBooking.customer),
-                    selectinload(TestBooking.test)
+                    selectinload(PropertyAssessmentRequest.customer),
+                    selectinload(PropertyAssessmentRequest.service)
                 )
-                .where(TestBooking.booking_id == booking_id)
+                .where(PropertyAssessmentRequest.request_id == request_id)
             )
             return result.scalar_one_or_none()
         except Exception as e:
-            self.logger.error(f"Failed to get booking: {e}")
+            self.logger.error(f"Failed to get request: {e}")
             return None
-    
-    async def get_customer_bookings(
+
+    async def get_customer_requests(
         self,
         customer_id: int,
         status: Optional[str] = None,
         limit: int = 20
-    ) -> List[TestBooking]:
-        """Get bookings for a customer."""
+    ) -> List[PropertyAssessmentRequest]:
+        """Get requests for a customer."""
         try:
             stmt = (
-                select(TestBooking)
-                .options(selectinload(TestBooking.test))
-                .where(TestBooking.customer_id == customer_id)
+                select(PropertyAssessmentRequest)
+                .options(selectinload(PropertyAssessmentRequest.service))
+                .where(PropertyAssessmentRequest.customer_id == customer_id)
             )
-            
+
             if status:
-                stmt = stmt.where(TestBooking.status == status)
-            
-            stmt = stmt.order_by(TestBooking.created_at.desc()).limit(limit)
-            
+                stmt = stmt.where(PropertyAssessmentRequest.status == status)
+
+            stmt = stmt.order_by(PropertyAssessmentRequest.created_at.desc()).limit(limit)
+
             result = await self.session.execute(stmt)
             return list(result.scalars().all())
-            
+
         except Exception as e:
-            self.logger.error(f"Failed to get customer bookings: {e}")
+            self.logger.error(f"Failed to get customer requests: {e}")
             return []
-    
+
     async def update_status(
         self,
-        booking_id: str,
+        request_id: str,
         status: str,
         payment_status: Optional[str] = None,
         payment_id: Optional[str] = None,
-        notes: Optional[str] = None,
-    ) -> Optional[TestBooking]:
-        """Update booking status and payment information."""
+        internal_notes: Optional[str] = None,
+        assigned_to: Optional[str] = None,
+    ) -> Optional[PropertyAssessmentRequest]:
+        """Update request status and payment information."""
         try:
-            booking = await self.get_by_booking_id(booking_id)
-            if not booking:
+            request = await self.get_by_request_id(request_id)
+            if not request:
                 return None
-            
-            booking.status = status
-            
+
+            request.status = status
+
             if payment_status is not None:
-                booking.payment_status = payment_status
-            
+                request.payment_status = payment_status
+
             if payment_id is not None:
-                booking.payment_id = payment_id
-            
-            if notes is not None:
-                booking.notes = notes
-            
+                request.payment_id = payment_id
+
+            if internal_notes is not None:
+                request.internal_notes = internal_notes
+
+            if assigned_to is not None:
+                request.assigned_to = assigned_to
+
             await self.session.commit()
-            await self.session.refresh(booking)
-            
-            self.logger.info(f"Booking status updated: {booking_id} -> {status}")
-            return booking
-            
+            await self.session.refresh(request)
+
+            self.logger.info(f"Request status updated: {request_id} -> {status}")
+            return request
+
         except Exception as e:
             await self.session.rollback()
-            self.logger.error(f"Failed to update booking status: {e}")
+            self.logger.error(f"Failed to update request status: {e}")
             return None
-    
-    async def get_all_bookings(self, limit: int = 50) -> List[TestBooking]:
-        """Get all bookings with optional limit."""
+
+    async def get_all_requests(self, limit: int = 50) -> List[PropertyAssessmentRequest]:
+        """Get all requests with optional limit."""
         try:
             result = await self.session.execute(
-                select(TestBooking)
+                select(PropertyAssessmentRequest)
                 .options(
-                    selectinload(TestBooking.customer),
-                    selectinload(TestBooking.test)
+                    selectinload(PropertyAssessmentRequest.customer),
+                    selectinload(PropertyAssessmentRequest.service)
                 )
-                .order_by(TestBooking.created_at.desc())
+                .order_by(PropertyAssessmentRequest.created_at.desc())
                 .limit(limit)
             )
             return list(result.scalars().all())
         except Exception as e:
-            self.logger.error(f"Failed to get all bookings: {e}")
+            self.logger.error(f"Failed to get all requests: {e}")
             return []
-    
-    async def update_booking_status(
+
+    async def get_requests_by_property(
         self,
-        booking_id: int,
-        status: str,
-        notes: Optional[str] = None
-    ) -> Optional[TestBooking]:
-        """Update booking status by booking database ID."""
+        property_parcel_id: str,
+        limit: int = 20
+    ) -> List[PropertyAssessmentRequest]:
+        """Get requests for a specific property."""
         try:
-            booking = await self.session.get(TestBooking, booking_id)
-            if not booking:
-                return None
-            
-            booking.status = status
-            if notes is not None:
-                booking.notes = notes
-            
-            await self.session.commit()
-            await self.session.refresh(booking)
-            
-            self.logger.info(f"Booking status updated: ID {booking_id} -> {status}")
-            return booking
-            
+            result = await self.session.execute(
+                select(PropertyAssessmentRequest)
+                .options(
+                    selectinload(PropertyAssessmentRequest.customer),
+                    selectinload(PropertyAssessmentRequest.service)
+                )
+                .where(PropertyAssessmentRequest.property_parcel_id == property_parcel_id)
+                .order_by(PropertyAssessmentRequest.created_at.desc())
+                .limit(limit)
+            )
+            return list(result.scalars().all())
         except Exception as e:
-            await self.session.rollback()
-            self.logger.error(f"Failed to update booking status: {e}")
-            return None
+            self.logger.error(f"Failed to get requests by property: {e}")
+            return []
 
 
 class MessageHistoryRepository:
@@ -445,10 +455,18 @@ class MessageHistoryRepository:
         intent: Optional[str] = None,
         conversation_stage: Optional[str] = None,
         entities_extracted: Optional[Dict[str, Any]] = None,
+        property_parcel_mentioned: Optional[str] = None,
+        assessment_year_mentioned: Optional[int] = None,
+        service_type_discussed: Optional[str] = None,
+        tax_amount_mentioned: Optional[Decimal] = None,
+        related_request_id: Optional[str] = None,
+        related_appeal_id: Optional[str] = None,
+        related_payment_id: Optional[str] = None,
+        resolved_customer_issue: Optional[bool] = None,
         instagram_message_id: Optional[str] = None,
         message_timestamp: Optional[datetime] = None,
     ) -> MessageHistory:
-        """Save a conversation message."""
+        """Save a property tax conversation message."""
         try:
             message = MessageHistory(
                 customer_id=customer_id,
@@ -458,6 +476,14 @@ class MessageHistoryRepository:
                 intent=intent,
                 conversation_stage=conversation_stage,
                 entities_extracted=entities_extracted,
+                property_parcel_mentioned=property_parcel_mentioned,
+                assessment_year_mentioned=assessment_year_mentioned,
+                service_type_discussed=service_type_discussed,
+                tax_amount_mentioned=tax_amount_mentioned,
+                related_request_id=related_request_id,
+                related_appeal_id=related_appeal_id,
+                related_payment_id=related_payment_id,
+                resolved_customer_issue=resolved_customer_issue,
                 instagram_message_id=instagram_message_id,
                 message_timestamp=message_timestamp or datetime.utcnow(),
             )

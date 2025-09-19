@@ -27,11 +27,16 @@ class TicketPriority(str, Enum):
 
 
 class TicketCategory(str, Enum):
-    """Ticket category enumeration."""
+    """Property tax ticket category enumeration."""
+    ASSESSMENT_QUESTION = "assessment_question"
     PAYMENT_ISSUE = "payment_issue"
-    BOOKING_ISSUE = "booking_issue"
-    TEST_INQUIRY = "test_inquiry"
-    REPORT_ISSUE = "report_issue"
+    APPEAL_PROCESS = "appeal_process"
+    TAX_CALCULATION = "tax_calculation"
+    PROPERTY_INFO = "property_info"
+    EXEMPTION_REQUEST = "exemption_request"
+    DOCUMENT_REQUEST = "document_request"
+    BILLING_INQUIRY = "billing_inquiry"
+    DEADLINE_EXTENSION = "deadline_extension"
     TECHNICAL_ISSUE = "technical_issue"
     GENERAL_COMPLAINT = "general_complaint"
     OTHER = "other"
@@ -58,8 +63,11 @@ class SupportTicket(Base):
     subject = Column(String(500), nullable=False)
     description = Column(Text, nullable=False)
     
-    # Context from bot conversation
-    order_id = Column(String(50))
+    # Property tax context from bot conversation
+    property_parcel_id = Column(String(50))
+    assessment_year = Column(Integer)
+    assessment_id = Column(String(50))
+    appeal_id = Column(String(50))
     payment_id = Column(String(100))
     conversation_context = Column(Text)  # JSON string of conversation history
     
