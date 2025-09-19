@@ -1,6 +1,6 @@
 """
-Unified Property Tax RAG Tool
-Replaces complex agentic RAG v2 with simple, powerful Google embeddings + LLM reasoning
+Enhanced Property Tax RAG Tool
+Comprehensive Texas property tax knowledge system with legal citations and semantic search
 """
 
 import asyncio
@@ -19,120 +19,145 @@ async def property_tax_assessment_recommendation_async(
     assessment_history: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Unified property tax assessment recommendation using Google embeddings + LLM reasoning.
+    Enhanced property tax guidance using comprehensive Texas property tax knowledge base.
 
-    Handles all scenarios:
-    - Direct assessment names: "I want property valuation assessment"
-    - Concern-based: "I think my property tax is too high"
-    - General property tax: "tax appeal process", "property value review"
-    - Property type/location specific recommendations
+    Handles all property tax scenarios:
+    - Exemption guidance: "homestead exemption", "senior citizen exemption"
+    - Appeal processes: "property tax protest", "ARB hearing"
+    - Assessment questions: "property valuation", "appraisal process"
+    - Legal requirements: "filing deadlines", "required documentation"
+    - Procedural guidance: "how to apply", "step-by-step process"
 
     Args:
         customer_query: What the customer is asking for
-        property_type: Property type for appropriate recommendations
-        location: Property location for targeted recommendations
+        property_type: Property type for targeted recommendations
+        location: Property location for county-specific guidance
         property_concerns: Comma-separated concerns if any
         assessment_history: Relevant assessment history
 
     Returns:
-        Comprehensive property tax recommendations with reasoning
+        Comprehensive property tax guidance with legal citations and authority
     """
     try:
-        logger.info("🏢 Processing property tax assessment recommendation request",
+        logger.info("🏛️ Processing property tax guidance request",
                    query=customer_query, property_type=property_type, location=location)
 
-        from services.vector_store.assessment_indexer import get_assessment_vector_store
+        from services.vector_store.semantic_search import create_property_tax_search, SearchRequest, SearchType, SearchScope
+        from services.knowledge_base.content_processor import get_content_processor
 
-        # Get the enhanced vector store with Google embeddings
-        vector_store = await get_assessment_vector_store(use_google_embeddings=True)
+        # Initialize the enhanced property tax search system
+        search_engine = await create_property_tax_search()
 
-        # Parse property concerns if provided as string
-        concerns_list = []
-        if property_concerns:
-            concerns_list = [s.strip() for s in property_concerns.split(',') if s.strip()]
+        # Determine search scope based on query content
+        search_scope = SearchScope.ALL
+        query_lower = customer_query.lower()
 
-        # Use the advanced search with LLM reasoning
-        result = await vector_store.search_and_reason_assessments(
-            customer_query=customer_query,
-            property_type=property_type,
-            location=location,
-            concerns=concerns_list if concerns_list else None,
-            k=10  # Get top 10 for LLM analysis
+        if any(term in query_lower for term in ['exemption', 'homestead', 'disability', 'senior', 'veteran']):
+            search_scope = SearchScope.EXEMPTIONS
+        elif any(term in query_lower for term in ['protest', 'appeal', 'challenge', 'hearing', 'arb']):
+            search_scope = SearchScope.APPEALS
+        elif any(term in query_lower for term in ['form', 'application', 'document']):
+            search_scope = SearchScope.FORMS
+        elif any(term in query_lower for term in ['procedure', 'process', 'step', 'how to']):
+            search_scope = SearchScope.PROCEDURES
+        elif any(term in query_lower for term in ['statute', 'law', 'code', 'legal']):
+            search_scope = SearchScope.STATUTES
+
+        # Build enhanced search request
+        search_request = SearchRequest(
+            query=customer_query,
+            search_type=SearchType.LEGAL_REASONING,
+            search_scope=search_scope,
+            max_results=8,
+            include_reasoning=True,
+            filter_by_authority=None,
+            priority_concepts=[property_type] if property_type else None
         )
-        
-        if not result.get('success'):
+
+        # Execute comprehensive search
+        search_results = await search_engine.search(search_request)
+
+        if not search_results:
             return {
                 "success": False,
-                "message": "I couldn't find any relevant assessments in our catalog. Could you please provide more specific information?",
-                "recommendations": []
+                "message": "I couldn't find relevant information in our Texas property tax knowledge base. Could you please provide more specific details about your property tax question?",
+                "guidance": [],
+                "legal_citations": []
             }
-        
-        # Extract LLM analysis
-        llm_analysis = result.get('llm_analysis', {})
-        recommendations = llm_analysis.get('top_recommendations', [])
-        
-        # Format user-friendly response
-        if recommendations:
-            formatted_recommendations = []
-            
-            for rec in recommendations[:5]:  # Top 5 recommendations
-                if isinstance(rec, dict):
-                    # LLM-formatted recommendation
-                    formatted_rec = {
-                        "assessment_name": rec.get('assessment_name', 'Unknown Assessment'),
-                        "assessment_code": rec.get('assessment_code', ''),
-                        "property_tax_rationale": rec.get('property_tax_rationale', 'Recommended based on your query'),
-                        "priority": rec.get('priority', 'medium'),
-                        "price": rec.get('price', 0)
-                    }
-                else:
-                    # Fallback to vector result format
-                    formatted_rec = {
-                        "assessment_name": rec.get('assessment_name', 'Unknown Assessment'),
-                        "assessment_code": rec.get('assessment_code', ''),
-                        "property_tax_rationale": f"Recommended for {customer_query.lower()}",
-                        "priority": "medium",
-                        "price": rec.get('price', 0)
-                    }
-                
-                formatted_recommendations.append(formatted_rec)
-            
-            # Create user-friendly message
-            assessment_names = [rec["assessment_name"] for rec in formatted_recommendations]
 
-            if len(assessment_names) == 1:
-                assessment_summary = assessment_names[0]
-            elif len(assessment_names) == 2:
-                assessment_summary = f"{assessment_names[0]} and {assessment_names[1]}"
-            else:
-                assessment_summary = f"{', '.join(assessment_names[:-1])}, and {assessment_names[-1]}"
+        # Format results for customer guidance
+        formatted_guidance = []
+        legal_citations = []
+        authorities = set()
 
-            message = f"Based on your request '{customer_query}'"
-            if property_type:
-                message += f" and your property type ({property_type})"
-            if concerns_list:
-                message += f" and concerns ({', '.join(concerns_list)})"
-            message += f", I recommend: {assessment_summary}."
+        for result in search_results[:5]:  # Top 5 results
+            doc = result.document
+            metadata = doc.metadata
 
-            # Add LLM reasoning if available
-            if llm_analysis.get('reasoning'):
-                message += f"\n\nProperty tax insight: {llm_analysis['reasoning']}"
-            
-            return {
-                "success": True,
-                "message": message,
-                "recommendations": formatted_recommendations,
-                "property_tax_reasoning": llm_analysis.get('reasoning', ''),
-                "additional_notes": llm_analysis.get('additional_notes', ''),
-                "total_options_analyzed": result.get('vector_results_count', 0)
+            # Format guidance entry
+            guidance_entry = {
+                "title": metadata.get('document_title', 'Property Tax Guidance'),
+                "content_summary": doc.page_content[:300] + "..." if len(doc.page_content) > 300 else doc.page_content,
+                "authority": metadata.get('authority', 'Texas'),
+                "document_type": metadata.get('document_type', 'general'),
+                "relevance_score": result.score,
+                "legal_concepts": metadata.get('legal_concepts', []),
+                "property_types": metadata.get('property_types', []),
+                "citations": metadata.get('citations', [])
             }
-        
-        else:
-            return {
-                "success": False,
-                "message": f"I couldn't find specific assessment recommendations for '{customer_query}'. Could you provide more details about what you're looking for?",
-                "recommendations": []
-            }
+
+            formatted_guidance.append(guidance_entry)
+
+            # Collect legal citations
+            if metadata.get('citations'):
+                legal_citations.extend(metadata['citations'])
+
+            # Track authorities
+            if metadata.get('authority'):
+                authorities.add(metadata['authority'])
+
+        # Remove duplicate citations
+        legal_citations = list(set(legal_citations))
+
+        # Generate comprehensive response message
+        primary_authority = next(iter(authorities)) if authorities else "Texas"
+
+        message_parts = [
+            f"Based on your question about '{customer_query}', here's guidance from Texas property tax law:"
+        ]
+
+        if property_type:
+            message_parts.append(f"For {property_type} properties:")
+
+        if location:
+            message_parts.append(f"In {location}:")
+
+        # Add key guidance points
+        if formatted_guidance:
+            top_guidance = formatted_guidance[0]
+            message_parts.append(f"\n{top_guidance['content_summary']}")
+
+            if top_guidance.get('legal_concepts'):
+                concepts = ', '.join(top_guidance['legal_concepts'][:3])
+                message_parts.append(f"\nThis relates to: {concepts}")
+
+        # Add legal citations if available
+        if legal_citations:
+            citations_text = ', '.join(legal_citations[:3])
+            message_parts.append(f"\nLegal basis: {citations_text}")
+
+        message = ' '.join(message_parts)
+
+        return {
+            "success": True,
+            "message": message,
+            "guidance": formatted_guidance,
+            "legal_citations": legal_citations,
+            "primary_authority": primary_authority,
+            "search_scope": search_scope.value,
+            "total_results_analyzed": len(search_results),
+            "confidence_level": "high" if search_results and search_results[0].score > 0.7 else "medium"
+        }
 
     except Exception as e:
         logger.error("❌ Property tax assessment recommendation failed", error=str(e), query=customer_query)
@@ -190,18 +215,26 @@ def property_tax_assessment_recommendation_sync(
             loop.close()
 
 
-# Create the unified property tax RAG tool
+# Create the enhanced property tax RAG tool
 property_tax_rag_tool = StructuredTool.from_function(
     func=property_tax_assessment_recommendation_sync,
     coroutine=property_tax_assessment_recommendation_async,
     name="property_tax_assessment_recommendation",
-    description="""Unified property tax assessment recommendation tool using Google embeddings and LLM reasoning.
+    description="""Comprehensive Texas property tax guidance tool with legal citations and semantic search.
 
-Handles all property tax assessment queries:
-- Direct assessment requests: "I want property valuation", "tax appeal assessment"
-- Concern-based: "My property tax is too high", "assessment seems unfair"
-- General property tax: "property value review", "tax calculation analysis"
-- Property type/location specific recommendations
+Provides expert guidance for all property tax scenarios:
+- Exemptions: "homestead exemption", "senior citizen exemption", "veteran exemption"
+- Appeals: "property tax protest", "ARB hearing", "challenge assessment"
+- Legal requirements: "filing deadlines", "required documentation", "protest process"
+- Procedures: "how to apply", "step-by-step guidance", "appeal timeline"
+- Assessments: "property valuation", "appraisal process", "market value"
 
-Returns intelligent property tax recommendations with professional reasoning."""
+Features:
+- Real Texas property tax law data from comptroller.texas.gov
+- Legal citations with authority verification
+- County-specific guidance when location provided
+- Property type-specific recommendations
+- Step-by-step procedural guidance
+
+Returns comprehensive guidance with legal basis and authoritative sources."""
 )
