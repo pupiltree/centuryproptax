@@ -27,18 +27,23 @@ class CustomerRepository:
         self.session = session
         self.logger = logger.bind(component="customer_repository")
     
-    async def get_by_instagram_id(self, instagram_id: str) -> Optional[CustomerProfile]:
-        """Get customer by Instagram ID."""
+    async def get_by_whatsapp_id(self, whatsapp_id: str) -> Optional[CustomerProfile]:
+        """Get customer by WhatsApp ID."""
         try:
             result = await self.session.execute(
                 select(CustomerProfile)
-                .where(CustomerProfile.instagram_id == instagram_id)
+                .where(CustomerProfile.whatsapp_id == whatsapp_id)
                 .options(selectinload(CustomerProfile.bookings))
             )
             return result.scalar_one_or_none()
         except Exception as e:
-            self.logger.error(f"Failed to get customer by Instagram ID: {e}")
+            self.logger.error(f"Failed to get customer by WhatsApp ID: {e}")
             return None
+
+    # Backwards compatibility method - will be removed
+    async def get_by_instagram_id(self, instagram_id: str) -> Optional[CustomerProfile]:
+        """Get customer by Instagram ID (legacy method for backwards compatibility)."""
+        return await self.get_by_whatsapp_id(instagram_id)
     
     async def get_by_phone(self, phone: str) -> Optional[CustomerProfile]:
         """Get customer by phone number."""
@@ -54,13 +59,13 @@ class CustomerRepository:
     
     async def create_or_update(
         self,
-        instagram_id: str,
+        whatsapp_id: str,
         **profile_data
     ) -> CustomerProfile:
         """Create or update customer profile."""
         try:
             # Check if customer exists
-            existing = await self.get_by_instagram_id(instagram_id)
+            existing = await self.get_by_whatsapp_id(whatsapp_id)
 
             if existing:
                 # Update existing customer
@@ -74,13 +79,13 @@ class CustomerRepository:
                 await self.session.commit()
                 await self.session.refresh(existing)
 
-                self.logger.info(f"Property tax customer updated: {instagram_id}")
+                self.logger.info(f"Property tax customer updated: {whatsapp_id}")
                 return existing
 
             else:
                 # Create new customer
                 new_customer = CustomerProfile(
-                    instagram_id=instagram_id,
+                    whatsapp_id=whatsapp_id,
                     last_interaction=datetime.utcnow(),
                     conversation_count=1,
                     **profile_data
@@ -90,17 +95,17 @@ class CustomerRepository:
                 await self.session.commit()
                 await self.session.refresh(new_customer)
 
-                self.logger.info(f"Property tax customer created: {instagram_id}")
+                self.logger.info(f"Property tax customer created: {whatsapp_id}")
                 return new_customer
-                
+
         except Exception as e:
             await self.session.rollback()
             self.logger.error(f"Failed to create/update customer: {e}")
             raise
-    
+
     async def update_property_info(
         self,
-        instagram_id: str,
+        whatsapp_id: str,
         owned_properties: Optional[List[str]] = None,
         primary_property_parcel: Optional[str] = None,
         property_ownership_type: Optional[str] = None,
@@ -109,7 +114,7 @@ class CustomerRepository:
     ) -> Optional[CustomerProfile]:
         """Update customer property ownership information."""
         try:
-            customer = await self.get_by_instagram_id(instagram_id)
+            customer = await self.get_by_whatsapp_id(whatsapp_id)
             if not customer:
                 return None
 

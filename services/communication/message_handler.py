@@ -12,6 +12,7 @@ from datetime import datetime
 
 from services.messaging.whatsapp_client import get_whatsapp_client
 from services.messaging.message_batching import message_batcher
+from services.messaging.whatsapp_types import WhatsAppMessage as InstagramMessage
 # Use workflow-compliant property tax assistant
 from agents.core.property_tax_assistant_v3 import process_property_tax_message
 from config.settings import settings
@@ -19,40 +20,7 @@ from config.settings import settings
 logger = structlog.get_logger()
 
 
-async def fetch_instagram_user_info(user_id: str) -> Dict[str, Any]:
-    """
-    Fetch Instagram user information using Graph API.
-    Returns user details like username, name, etc.
-    """
-    try:
-        import aiohttp
-        import os
-        
-        access_token = os.getenv("IG_TOKEN")
-        if not access_token:
-            logger.warning("Instagram access token not configured")
-            return {"username": f"user_{user_id}", "name": "User"}
-        
-        # Instagram Graph API endpoint for user info
-        url = f"https://graph.instagram.com/{user_id}"
-        params = {
-            "fields": "username,name",
-            "access_token": access_token
-        }
-        
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url, params=params) as response:
-                if response.status == 200:
-                    user_data = await response.json()
-                    logger.info(f"📱 Fetched Instagram user info: {user_data.get('username', 'unknown')}")
-                    return user_data
-                else:
-                    logger.warning(f"Failed to fetch Instagram user info: {response.status}")
-                    return {"username": f"user_{user_id}", "name": "User"}
-    
-    except Exception as e:
-        logger.error(f"Error fetching Instagram user info: {e}")
-        return {"username": f"user_{user_id}", "name": "User"}
+# Instagram user info fetching removed - not needed for WhatsApp Business API
 
 
 class UniversalMessageHandler:
@@ -87,8 +55,10 @@ class UniversalMessageHandler:
         
         try:
             signature = signature.replace('sha256=', '')
+            # Use WhatsApp webhook secret for verification
+            webhook_secret = getattr(settings, 'whatsapp_webhook_secret', getattr(settings, 'instagram_app_secret', ''))
             expected = hmac.new(
-                settings.instagram_app_secret.encode(),
+                webhook_secret.encode(),
                 payload,
                 hashlib.sha256
             ).hexdigest()
@@ -208,14 +178,10 @@ class UniversalMessageHandler:
             
             # Get session ID
             session_id = self._get_session_id(message.sender_id)
-            
-            # Fetch Instagram user info on first message or if not cached
-            if message.sender_id not in self.sessions or 'instagram_info' not in self.sessions[message.sender_id]:
-                instagram_info = await fetch_instagram_user_info(message.sender_id)
-                if message.sender_id in self.sessions:
-                    self.sessions[message.sender_id]['instagram_info'] = instagram_info
-                    logger.info(f"📱 Stored Instagram info for user: {instagram_info.get('username', 'unknown')}")
-            
+
+            # WhatsApp Business API doesn't require user info fetching
+            # User identification is handled via phone number in session
+
             # Prepare message with intelligent interpretation
             message_text = await self._intelligent_message_preparation(message)
             

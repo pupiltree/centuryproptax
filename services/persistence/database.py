@@ -114,7 +114,7 @@ class CustomerProfile(Base):
 
     # Primary identification
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    instagram_id: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
+    whatsapp_id: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
 
     # Personal information
     name: Mapped[Optional[str]] = mapped_column(String(200))

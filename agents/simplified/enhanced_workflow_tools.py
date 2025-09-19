@@ -1122,7 +1122,7 @@ async def confirm_order_cash_payment(
             customer_repo = CustomerRepository(session)
             assessment_request_repo = PropertyAssessmentRequestRepository(session)
             
-            customer = await customer_repo.get_by_instagram_id(instagram_id)
+            customer = await customer_repo.get_by_whatsapp_id(instagram_id)  # Parameter naming will be updated separately
             if not customer:
                 return {
                     "success": False,

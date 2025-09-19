@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 import structlog
 
-from services.messaging.instagram_types import InstagramMessage
+from services.messaging.whatsapp_types import WhatsAppMessage as InstagramMessage
 
 logger = structlog.get_logger()
 

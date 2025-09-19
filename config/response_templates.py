@@ -3,7 +3,7 @@ Property Tax Response Templates - Comprehensive multilingual templates for Centu
 Standardized conversation flows and response patterns for common property tax scenarios
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from enum import Enum
 import logging
 

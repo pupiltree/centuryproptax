@@ -454,7 +454,7 @@ async def verify_payment_completion(
                 
                 # Verify customer owns this order
                 if instagram_id:
-                    customer = await customer_repo.get_by_instagram_id(instagram_id)
+                    customer = await customer_repo.get_by_whatsapp_id(instagram_id)  # Parameter naming will be updated
                     if not customer:
                         return {
                             "success": False,
