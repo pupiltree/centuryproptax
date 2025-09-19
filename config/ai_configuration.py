@@ -4,7 +4,7 @@ Controls AI behavior, model selection, and domain-specific parameters for proper
 """
 
 import os
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 from enum import Enum
 from dataclasses import dataclass
 import logging
@@ -15,7 +15,6 @@ class AIModel(Enum):
     """Available AI models for different tasks"""
     GEMINI_FLASH = "gemini-2.5-flash"
     GEMINI_PRO = "gemini-2.5-pro"
-    GEMINI_LIVE = "gemini-2.5-live"
 
 class PropertyTaxDomain(Enum):
     """Property tax domain categories"""
@@ -71,13 +70,6 @@ AI_MODEL_CONFIGS = {
         top_p=0.7
     ),
 
-    # Voice conversations - natural and responsive
-    "voice_conversation": AIModelConfig(
-        model_name=AIModel.GEMINI_LIVE.value,
-        temperature=0.2,  # Slightly more natural for voice
-        max_tokens=1500,
-        top_p=0.85
-    ),
 
     # Property tax analysis - domain expertise
     "property_tax_analysis": AIModelConfig(

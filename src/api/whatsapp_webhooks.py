@@ -147,144 +147,6 @@ async def _handle_whatsapp_message_safe(message_data: Dict[str, Any], message_ha
             logger.error("Failed to send error message to user")
 
 
-async def _handle_voice_call_prescription_image(
-    message_data: Dict[str, Any],
-    user_id: str,
-    contact_name: str,
-    state_manager
-) -> None:
-    """Handle prescription image during active voice call."""
-    try:
-        logger.info(f"🔊📋 Processing voice call prescription image from {user_id[:5]}***")
-
-        # Set status to processing
-        await state_manager.set_prescription_processing_status(
-            user_id, "processing", "Analyzing prescription image..."
-        )
-
-        # Import image handler and analysis tool
-        from services.messaging.whatsapp_image_handler import WhatsAppImageHandler
-        from agents.simplified.prescription_tools import analyze_prescription_image_tool_async
-        import base64
-
-        # Initialize image handler
-        image_handler = WhatsAppImageHandler()
-
-        # Download and process image
-        image_data = await image_handler.download_image_from_whatsapp_message(message_data)
-
-        if image_data is None:
-            # Set failed status
-            await state_manager.set_prescription_processing_status(
-                user_id, "failed", "Could not download prescription image"
-            )
-
-            # DO NOT SEND WHATSAPP MESSAGE - Voice agent will handle communication
-            logger.error(f"❌ Failed to download prescription image for voice call {user_id[:5]}***")
-            return
-
-        # Extract image bytes and format
-        image_bytes, image_format = image_data
-
-        # Convert to base64 for analysis
-        image_base64 = base64.b64encode(image_bytes).decode('utf-8')
-
-        # Analyze prescription image
-        analysis_result = await analyze_prescription_image_tool_async(
-            image_data_b64=image_base64,
-            image_format=image_format,
-            customer_id=user_id
-        )
-
-        if analysis_result.get("success"):
-            prescription_data = analysis_result.get("prescription_data", {})
-            confidence_score = analysis_result.get("confidence_score", 0)
-
-            # NEW: Send via LiveKit data stream for real-time communication
-            from services.voice.livekit_data_bridge import get_livekit_data_bridge
-            data_bridge = get_livekit_data_bridge()
-
-            # Send prescription data instantly to voice agent via LiveKit
-            livekit_sent = await data_bridge.send_prescription_data(
-                phone_number=user_id,
-                prescription_data=prescription_data,
-                confidence_score=confidence_score
-            )
-
-            if livekit_sent:
-                logger.info(f"🚀 REAL-TIME SUCCESS: Sent prescription data via LiveKit to voice agent for {user_id[:5]}***")
-            else:
-                logger.warning(f"⚠️ LiveKit send failed, using fallback Redis storage for {user_id[:5]}***")
-
-                # FALLBACK: Save to Redis for backward compatibility (if LiveKit fails)
-                from services.persistence.redis_conversation_store import get_conversation_store
-                conv_store = get_conversation_store()
-                whatsapp_session_id = f"session_{user_id}_whatsapp_healthcare"
-
-                # Create prescription context in same format as regular handler
-                prescription_context = {
-                    "type": "prescription_analysis",
-                    "prescription_data": prescription_data,
-                    "confidence_score": confidence_score,
-                    "awaiting_confirmation": False,  # Voice call doesn't need confirmation workflow
-                    "timestamp": str(datetime.now())
-                }
-
-                # Store in Redis context (same as regular WhatsApp handler)
-                current_context = conv_store.get_context(whatsapp_session_id) or {}
-                current_context["prescription_analysis"] = prescription_context
-                conv_store.save_context(whatsapp_session_id, current_context)
-
-                logger.info(f"💾 FALLBACK: Saved prescription context to Redis for voice call: {whatsapp_session_id}")
-
-            # Also save to voice call state for backward compatibility
-            await state_manager.save_prescription_context(user_id, prescription_data)
-            await state_manager.set_prescription_processing_status(
-                user_id, "completed", "Analysis completed successfully", prescription_data
-            )
-
-            # DO NOT SEND WHATSAPP CONFIRMATION MESSAGE
-            # Voice agent will communicate results during the call
-            logger.info(f"✅ Voice call prescription analysis complete for {user_id[:5]}*** - sent via LiveKit!")
-
-        else:
-            # Analysis failed - send failure via LiveKit
-            error_message = analysis_result.get("message", "Prescription analysis failed")
-            user_friendly_error = analysis_result.get("user_friendly_error", "")
-
-            # NEW: Send failure via LiveKit data stream
-            from services.voice.livekit_data_bridge import get_livekit_data_bridge
-            data_bridge = get_livekit_data_bridge()
-
-            livekit_sent = await data_bridge.send_prescription_failure(
-                phone_number=user_id,
-                error_message=error_message,
-                user_friendly_error=user_friendly_error
-            )
-
-            if livekit_sent:
-                logger.info(f"🚀 REAL-TIME FAILURE: Sent prescription failure via LiveKit for {user_id[:5]}***")
-            else:
-                logger.warning(f"⚠️ LiveKit failure send failed for {user_id[:5]}***")
-
-            # Set failed status for backward compatibility
-            await state_manager.set_prescription_processing_status(
-                user_id, "failed", error_message
-            )
-
-            # DO NOT SEND ERROR MESSAGE - Voice agent will handle
-            logger.warning(f"❌ Voice call prescription analysis failed for {user_id[:5]}*** - sent via LiveKit!")
-
-    except Exception as e:
-        logger.error(f"Error processing voice call prescription image: {e}")
-
-        # Set error status
-        await state_manager.set_prescription_processing_status(
-            user_id, "failed", f"Processing error: {str(e)}"
-        )
-
-        # DO NOT SEND ERROR MESSAGE - Voice agent will handle all communication
-
 
 async def _handle_whatsapp_image_message(
     message_data: Dict[str, Any],
@@ -447,7 +309,7 @@ You can:
 
 
 async def _handle_whatsapp_message(message_data: Dict[str, Any], message_handler) -> None:
-    """Handle incoming WhatsApp message with voice call awareness."""
+    """Handle incoming WhatsApp message."""
     try:
         # Extract message details
         user_id = message_data["from"]
@@ -458,50 +320,22 @@ async def _handle_whatsapp_message(message_data: Dict[str, Any], message_handler
         logger.info(f"Processing WhatsApp message from {user_id[:5]}***",
                    type=message_type, text_length=len(message_text))
 
-        # Check if user is currently in a voice call
-        from services.voice.voice_chat_state import get_voice_chat_state_manager
-        state_manager = get_voice_chat_state_manager()
-        is_voice_call_active = await state_manager.is_voice_call_active(user_id)
-
-        logger.info(f"🔊 Voice call active for {user_id[:5]}***: {is_voice_call_active}")
-
         # Handle different message types
         if message_type == "image":
             # Process image message for prescription analysis
-            if is_voice_call_active:
-                # Special handling for voice call prescription images
-                await _handle_voice_call_prescription_image(message_data, user_id, contact_name, state_manager)
-                return
-            else:
-                # Normal image processing for chat
-                await _handle_whatsapp_image_message(message_data, message_handler, user_id, contact_name)
-                return
+            await _handle_whatsapp_image_message(message_data, message_handler, user_id, contact_name)
+            return
         elif message_type != "text":
             # Handle other non-text message types
             whatsapp_client = get_whatsapp_client()
-
-            if is_voice_call_active:
-                await whatsapp_client.send_text_message(
-                    to=user_id,
-                    message="I see you're currently on a voice call with me. Please send a prescription image if you mentioned one during our call, or continue our conversation by voice."
-                )
-            else:
-                await whatsapp_client.send_text_message(
-                    to=user_id,
-                    message="I can process text messages and prescription images. Please send your message as text or upload a prescription image."
-                )
+            await whatsapp_client.send_text_message(
+                to=user_id,
+                message="I can process text messages and prescription images. Please send your message as text or upload a prescription image."
+            )
             return
 
         if not message_text.strip():
             logger.warning("Empty WhatsApp message received")
-            return
-
-        # If user is in active voice call, don't process text messages through chat
-        if is_voice_call_active:
-            # DO NOT SEND ANY REPLY - just log and return
-            # The voice agent will handle all communication during the call
-            logger.info(f"🔊 Blocked text message processing - user {user_id[:5]}*** is in active voice call")
-            logger.info(f"📝 Suppressed chat reply during voice call for message: '{message_text[:50]}...'")
             return
 
         # Process through universal message handler (normal chat flow)
