@@ -11,12 +11,7 @@ from langchain_core.tools import tool
 # Remove BaseToolException import as it doesn't exist in current LangChain
 import structlog
 
-# Import the property document parser
-from services.image_analysis.property_document_parser import (
-    get_property_document_parser,
-    PropertyDocumentData,
-    analyze_property_document_image
-)
+# Image analysis services removed - property document analysis capabilities disabled
 
 logger = structlog.get_logger()
 
@@ -27,7 +22,8 @@ async def analyze_property_document_tool_async(
     customer_id: str = None
 ) -> Dict[str, Any]:
     """
-    Analyze property document image and extract property assessment information.
+    Property document image analysis is not available in this system.
+    Image analysis services have been removed.
 
     Args:
         image_data_b64: Base64 encoded image data
@@ -35,134 +31,38 @@ async def analyze_property_document_tool_async(
         customer_id: Customer identifier for tracking
 
     Returns:
-        Structured property document data with extracted information
+        Error response indicating feature is not available
     """
-    try:
-        logger.info("🔍 Starting property document image analysis",
-                   customer_id=customer_id, image_format=image_format)
-        
-        # Decode base64 image data
-        try:
-            image_bytes = base64.b64decode(image_data_b64)
-            logger.info("✅ Successfully decoded image", decoded_size=len(image_bytes))
-        except Exception as e:
-            logger.error("❌ Base64 decode failed", error=str(e))
-            return {
-                "success": False,
-                "error": "invalid_image_data",
-                "message": "Could not decode the image. Please make sure the image is properly uploaded.",
-                "user_friendly_error": "Image format not supported. Please try uploading a clearer image."
-            }
-        
-        # Analyze prescription image using Gemini-2.5-Pro
-        prescription_data = await analyze_prescription_image(image_bytes, image_format)
-        
-        # Validate the extracted data
-        parser = get_prescription_parser()
-        validation_result = parser.validate_prescription_data(prescription_data)
-        
-        # Determine response based on extraction quality
-        if prescription_data.confidence_score >= 0.7 and validation_result["is_valid"]:
-            # High confidence, complete extraction
-            return {
-                "success": True,
-                "extraction_quality": "excellent",
-                "prescription_data": {
-                    "patient_name": prescription_data.patient_name,
-                    "age": prescription_data.age,
-                    "gender": prescription_data.gender,
-                    "prescribed_tests": prescription_data.prescribed_tests,
-                    "doctor_name": prescription_data.doctor_name,
-                    "hospital_clinic": prescription_data.hospital_clinic,
-                    "prescription_date": prescription_data.prescription_date,
-                    "additional_instructions": prescription_data.additional_instructions
-                },
-                "confidence_score": prescription_data.confidence_score,
-                "missing_fields": validation_result["missing_critical"],
-                "message": f"I found {len(prescription_data.prescribed_tests)} tests in your prescription. Let me help you book these tests.",
-                "next_action": "confirm_booking" if validation_result["is_valid"] else "collect_missing_info"
-            }
-            
-        elif prescription_data.confidence_score >= 0.4 and prescription_data.prescribed_tests:
-            # Medium confidence, partial extraction
-            return {
-                "success": True,
-                "extraction_quality": "partial",
-                "prescription_data": {
-                    "patient_name": prescription_data.patient_name,
-                    "age": prescription_data.age,
-                    "gender": prescription_data.gender,
-                    "prescribed_tests": prescription_data.prescribed_tests,
-                    "doctor_name": prescription_data.doctor_name,
-                    "hospital_clinic": prescription_data.hospital_clinic,
-                    "prescription_date": prescription_data.prescription_date,
-                    "additional_instructions": prescription_data.additional_instructions
-                },
-                "confidence_score": prescription_data.confidence_score,
-                "missing_fields": validation_result["missing_critical"],
-                "message": f"I could identify {len(prescription_data.prescribed_tests)} tests from your prescription, but I need some additional information to complete the booking.",
-                "next_action": "collect_missing_info"
-            }
-        
-        elif prescription_data.prescribed_tests:
-            # Low confidence but some tests found
-            return {
-                "success": True,
-                "extraction_quality": "low",
-                "prescription_data": {
-                    "prescribed_tests": prescription_data.prescribed_tests,
-                    "patient_name": prescription_data.patient_name,
-                    "age": prescription_data.age,
-                    "gender": prescription_data.gender
-                },
-                "confidence_score": prescription_data.confidence_score,
-                "missing_fields": validation_result["missing_critical"],
-                "message": f"I found some tests ({', '.join(prescription_data.prescribed_tests[:3])}) in your prescription, but the image quality makes it difficult to read all details. Could you help me confirm the information?",
-                "next_action": "manual_verification"
-            }
-        
-        else:
-            # No usable information found
-            return {
-                "success": False,
-                "extraction_quality": "failed",
-                "error": "no_tests_found",
-                "confidence_score": prescription_data.confidence_score,
-                "message": "I couldn't identify any diagnostic tests in this prescription. This might be because the image is unclear, or it contains only medications. Could you either upload a clearer image or tell me which tests you'd like to book?",
-                "user_friendly_error": "Unable to read prescription clearly",
-                "next_action": "manual_input"
-            }
-        
-    except Exception as e:
-        logger.error("❌ Prescription image analysis failed", error=str(e), customer_id=customer_id)
-        return {
-            "success": False,
-            "error": "analysis_failed",
-            "message": "I'm having trouble analyzing your prescription image right now. Could you please tell me which tests you'd like to book, or try uploading the image again?",
-            "user_friendly_error": "Technical issue with image analysis",
-            "retry_suggested": True
-        }
+    logger.info("❌ Property document image analysis not available", customer_id=customer_id)
+
+    return {
+        "success": False,
+        "error": "feature_not_available",
+        "message": "Image analysis for property documents is not currently available. Please provide property details through text instead.",
+        "user_friendly_error": "Image analysis feature is not available. Please describe your property tax query in text.",
+        "next_action": "manual_input"
+    }
 
 
-def analyze_prescription_image_tool_sync(
+def analyze_property_document_tool_sync(
     image_data_b64: str,
     image_format: str = "jpeg",
     customer_id: str = None
 ) -> Dict[str, Any]:
     """
-    Synchronous wrapper for prescription image analysis.
-    
+    Synchronous wrapper for property document analysis.
+    Returns error indicating feature is not available.
+
     Args:
         image_data_b64: Base64 encoded image data
         image_format: Image format (jpeg, png, webp)
         customer_id: Customer identifier for tracking
-        
+
     Returns:
-        Structured prescription data with extracted information
+        Error response indicating feature is not available
     """
     import asyncio
-    import threading
-    
+
     # Get or create event loop in a thread-safe way
     try:
         # Try to get the current event loop
@@ -173,24 +73,24 @@ def analyze_prescription_image_tool_sync(
             asyncio.set_event_loop(new_loop)
             try:
                 return new_loop.run_until_complete(
-                    analyze_prescription_image_tool_async(image_data_b64, image_format, customer_id)
+                    analyze_property_document_tool_async(image_data_b64, image_format, customer_id)
                 )
             finally:
                 new_loop.close()
-        
+
         # Run in a separate thread to avoid event loop conflicts
         import concurrent.futures
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future = executor.submit(run_in_thread)
             return future.result()
-            
+
     except RuntimeError:
         # No event loop running, safe to create one
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
             return loop.run_until_complete(
-                analyze_prescription_image_tool_async(image_data_b64, image_format, customer_id)
+                analyze_property_document_tool_async(image_data_b64, image_format, customer_id)
             )
         finally:
             loop.close()
@@ -199,85 +99,85 @@ def analyze_prescription_image_tool_sync(
 # Create the tool using StructuredTool.from_function with both sync and async implementations
 from langchain_core.tools import StructuredTool
 
-analyze_prescription_image_tool = StructuredTool.from_function(
-    func=analyze_prescription_image_tool_sync,
-    coroutine=analyze_prescription_image_tool_async,
-    name="analyze_prescription_image_tool",
-    description="Analyze prescription image and extract medical test information using Gemini-2.5-Pro vision model. Returns structured data with patient info, prescribed tests, doctor details, and confidence score."
+analyze_property_document_tool = StructuredTool.from_function(
+    func=analyze_property_document_tool_sync,
+    coroutine=analyze_property_document_tool_async,
+    name="analyze_property_document_tool",
+    description="Property document image analysis is not available. This tool returns an error message indicating the feature has been removed."
 )
 
 
 @tool
-def confirm_prescription_booking(
-    prescription_data: Dict[str, Any],
+def confirm_property_assessment_booking(
+    property_data: Dict[str, Any],
     customer_confirmation: str,
     additional_info: Dict[str, Any] = None
 ) -> Dict[str, Any]:
     """
-    Process user confirmation for prescription-based booking.
-    
+    Process user confirmation for property assessment booking.
+    Note: Since image analysis is disabled, this primarily handles manual property data.
+
     Args:
-        prescription_data: Extracted prescription information
+        property_data: Property information provided by user
         customer_confirmation: User's confirmation response
         additional_info: Any additional information provided by user
-        
+
     Returns:
         Booking confirmation status and next steps
     """
     try:
-        logger.info("📋 Processing prescription booking confirmation")
-        
+        logger.info("📋 Processing property assessment booking confirmation")
+
         confirmation_lower = customer_confirmation.lower()
-        
+
         # Check for positive confirmation
         if any(word in confirmation_lower for word in ['yes', 'confirm', 'book', 'proceed', 'correct']):
-            # Prepare data for order creation
+            # Prepare data for property assessment booking
             booking_data = {
                 "confirmed": True,
-                "prescription_based": True,
-                "patient_name": prescription_data.get("patient_name"),
-                "age": prescription_data.get("age"),
-                "gender": prescription_data.get("gender"),
-                "tests": prescription_data.get("prescribed_tests", []),
-                "doctor_name": prescription_data.get("doctor_name"),
-                "prescription_date": prescription_data.get("prescription_date")
+                "property_based": True,
+                "property_address": property_data.get("property_address"),
+                "property_type": property_data.get("property_type"),
+                "assessment_year": property_data.get("assessment_year"),
+                "owner_name": property_data.get("owner_name"),
+                "contact_details": property_data.get("contact_details")
             }
-            
+
             # Merge additional info if provided
             if additional_info:
                 booking_data.update(additional_info)
-            
+
             return {
                 "success": True,
                 "confirmed": True,
                 "booking_data": booking_data,
-                "message": "Perfect! I'll help you book these tests. I'll need your phone number, PIN code, preferred date, payment method, and service preference (home collection or test center visit).",
-                "next_action": "collect_booking_details"
+                "message": "Perfect! I'll help you with your property tax assessment. I'll need to confirm some details about your property and contact information.",
+                "next_action": "collect_property_details"
             }
-        
+
         elif any(word in confirmation_lower for word in ['no', 'wrong', 'incorrect', 'different']):
             return {
                 "success": True,
                 "confirmed": False,
-                "message": "I understand the extracted information wasn't correct. Could you please tell me which tests you'd like to book and any other details I got wrong?",
+                "message": "I understand the information wasn't correct. Could you please provide the correct property details?",
                 "next_action": "manual_correction"
             }
-        
+
         else:
             # Unclear response, ask for clarification
             return {
                 "success": True,
                 "needs_clarification": True,
-                "message": "I want to make sure I have the right information. Are the tests and details I found correct, or would you like to make any changes?",
+                "message": "I want to make sure I have the right property information. Are the details I have correct, or would you like to make any changes?",
                 "next_action": "request_clear_confirmation"
             }
-            
+
     except Exception as e:
-        logger.error("Error processing prescription booking confirmation", error=str(e))
+        logger.error("Error processing property assessment confirmation", error=str(e))
         return {
             "success": False,
             "error": "confirmation_processing_failed",
-            "message": "Let me help you book these tests step by step. Which tests would you like to book?",
+            "message": "Let me help you with your property tax inquiry step by step. Could you provide your property details?",
             "fallback_to_manual": True
         }
 
@@ -288,10 +188,10 @@ def confirm_prescription_booking(
 
 
 # Helper function to integrate with existing workflow
-def create_prescription_workflow_tools():
-    """Create prescription-specific tools for the healthcare assistant workflow."""
+def create_property_document_workflow_tools():
+    """Create property document tools for the property tax assistant workflow."""
     return [
-        analyze_prescription_image_tool,
-        confirm_prescription_booking
-        # REMOVED: format_prescription_summary - LLM handles formatting naturally
+        analyze_property_document_tool,
+        confirm_property_assessment_booking
+        # Note: Image analysis functionality has been removed - tools now handle text-based property data only
     ]
