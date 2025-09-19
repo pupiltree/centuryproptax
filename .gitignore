@@ -178,3 +178,4 @@ temp/
 # Virtual environments
 venv/
 venv/*
+config/credentials/
