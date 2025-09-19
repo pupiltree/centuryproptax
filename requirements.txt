@@ -29,9 +29,7 @@ mcp>=1.12.0
 # Razorpay Integration
 razorpay>=1.4.0
 
-# Voice Services (Future Phase)
-# deepgram-sdk>=3.2.0
-# whisper>=1.1.0
+# Voice Services removed - see CLEANUP: Issue #13
 
 # Security and Compliance
 python-jose[cryptography]>=3.3.0
@@ -42,8 +40,7 @@ python-multipart>=0.0.6
 prometheus-client>=0.19.0
 structlog>=23.2.0
 langfuse>=2.50.0  # LLM observability and tracing
-# opentelemetry-api>=1.21.0
-# opentelemetry-sdk>=1.21.0
+# OpenTelemetry removed - using Langfuse for LLM observability
 
 # Testing
 pytest>=7.4.0

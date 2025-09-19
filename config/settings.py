@@ -16,8 +16,6 @@ class Settings:
     whatsapp_phone_id: str = os.getenv("WHATSAPP_PHONE_ID", "")
     verify_token: str = os.getenv("VERIFY_TOKEN", "")
     
-    # Meta App Configuration (not currently used in production)
-    
     # Gemini AI Configuration
     google_api_key: str = os.getenv("GOOGLE_API_KEY", "")
     gemini_model_pro: str = os.getenv("GEMINI_MODEL_PRO", "gemini-2.5-pro")
@@ -30,9 +28,7 @@ class Settings:
     # State Persistence Configuration
     state_key_prefix: str = os.getenv("STATE_KEY_PREFIX", "property_tax_conversation")
     state_persistence_ttl: int = int(os.getenv("STATE_PERSISTENCE_TTL", "86400"))  # 24 hours
-    
-    # Agent Configuration (legacy options - not currently used)
-    
+
     # Application Configuration
     debug: bool = os.getenv("DEBUG", "false").lower() == "true"
     log_level: str = os.getenv("LOG_LEVEL", "INFO")
