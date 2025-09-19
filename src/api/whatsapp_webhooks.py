@@ -56,19 +56,33 @@ async def whatsapp_webhook_verify(
 @router.post("/webhook")
 async def whatsapp_webhook_handler(request: Request):
     """
-    WhatsApp webhook message handler.
-    
+    WhatsApp webhook message handler with enhanced security.
+
     Processes incoming messages and status updates from WhatsApp Business API.
+    Includes signature verification for enhanced security.
     IMPORTANT: Always returns 200 OK to prevent WhatsApp retries.
     """
     try:
-        # Get request body
-        webhook_data = await request.json()
-        logger.info("WhatsApp webhook received", 
-                   object_type=webhook_data.get("object"),
-                   entries_count=len(webhook_data.get("entry", [])))
-        
+        # Get raw body for signature verification
+        raw_body = await request.body()
+
+        # Get signature header
+        signature = request.headers.get("X-Hub-Signature-256", "")
+
+        # Verify webhook signature for enhanced security
         whatsapp_client = get_whatsapp_client()
+        if not whatsapp_client.verify_webhook_signature(raw_body, signature):
+            logger.warning("WhatsApp webhook signature verification failed")
+            # Still return 200 OK to prevent retries - log security incident
+            return {"status": "received", "warning": "signature_verification_failed"}
+
+        # Parse JSON data
+        webhook_data = await request.json() if raw_body else {}
+        logger.info("WhatsApp webhook received",
+                   object_type=webhook_data.get("object"),
+                   entries_count=len(webhook_data.get("entry", [])),
+                   signature_verified=bool(signature))
+
         # Use the modern integrated handler for WhatsApp messages
         handler = modern_integrated_webhook_handler
         
@@ -548,26 +562,37 @@ async def _handle_whatsapp_status(status_data: Dict[str, Any]) -> None:
 
 @router.get("/health")
 async def whatsapp_health():
-    """WhatsApp integration health check."""
+    """WhatsApp Business API integration health check."""
     try:
         whatsapp_client = get_whatsapp_client()
-        
+        business_config = whatsapp_client.get_business_configuration()
+
         health_status = {
             "whatsapp_configured": whatsapp_client.is_configured(),
-            "phone_number_id": whatsapp_client.phone_number_id,
-            "business_account_id": whatsapp_client.business_account_id,
+            "business_configuration": business_config,
             "webhook_url": "/whatsapp/webhook",
-            "verification_token_configured": bool(whatsapp_client.verify_token)
+            "verification_token_configured": bool(whatsapp_client.verify_token),
+            "features": {
+                "signature_verification": business_config["webhook_security_enabled"],
+                "template_messaging": whatsapp_client.is_configured(),
+                "interactive_messages": whatsapp_client.is_configured(),
+                "business_profile": whatsapp_client.is_configured()
+            }
         }
-        
+
         if whatsapp_client.is_configured():
             health_status["status"] = "healthy"
+
+            # Test business profile access if configured
+            profile_result = await whatsapp_client.get_business_profile()
+            health_status["business_profile_access"] = profile_result["success"]
+
         else:
             health_status["status"] = "not_configured"
             health_status["message"] = "WhatsApp access token not configured"
-        
+
         return health_status
-        
+
     except Exception as e:
         logger.error(f"WhatsApp health check error: {e}")
         return {
