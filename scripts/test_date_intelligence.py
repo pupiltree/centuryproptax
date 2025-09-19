@@ -141,7 +141,7 @@ def test_multiple_concurrent_bookings():
         print("-" * 30)
 
 if __name__ == "__main__":
-    print("🚀 Krsnaa Diagnostics - Intelligent Date Parsing Test\n")
+    print("🚀 Century PropTax - Intelligent Date Parsing Test\n")
     
     try:
         test_natural_language_dates()

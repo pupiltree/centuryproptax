@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Clear Redis data for a specific user in Krsnaa Diagnostics.
+Clear Redis data for a specific user in Century PropTax.
 Works with the actual key patterns used by the system.
 """
 

@@ -162,7 +162,7 @@ ADVANCED_ASSESSMENT_SERVICES = {
 
 
 @tool(parse_docstring=True)
-def validate_zip_code(zip_code: str) -> Dict[str, Any]:
+def validate_pin_code(pin_code: str) -> Dict[str, Any]:
     """
     Validate if ZIP code is serviceable for property tax assessment and get area details.
 
@@ -170,13 +170,13 @@ def validate_zip_code(zip_code: str) -> Dict[str, Any]:
     and returns detailed information about service availability and area details.
 
     Args:
-        zip_code: 5-digit ZIP code to validate (e.g., '75001', '77001')
+        pin_code: 5-digit ZIP code to validate (e.g., '75001', '77001')
     """
     try:
-        logger.info(f"ZIP validation started for: {zip_code}")
+        logger.info(f"ZIP validation started for: {pin_code}")
 
         # Clean ZIP code
-        clean_zip = str(zip_code).strip()
+        clean_zip = str(pin_code).strip()
         logger.debug(f"Cleaned ZIP code: '{clean_zip}' (length: {len(clean_zip)})")
 
         if len(clean_zip) != 5 or not clean_zip.isdigit():
@@ -841,6 +841,19 @@ async def _create_order_async(
         }
 
 
+class CreateOrderSchema(BaseModel):
+    """Schema for creating property tax service orders"""
+    instagram_id: str = Field(description="Customer's contact ID")
+    customer_name: str = Field(description="Customer's full name")
+    phone: str = Field(description="Customer's phone number")
+    test_codes: List[str] = Field(description="Service codes for property tax services")
+    pin_code: str = Field(description="Property location pin code")
+    preferred_date: Optional[str] = Field(default=None, description="Preferred service date")
+    preferred_time: Optional[str] = Field(default=None, description="Preferred service time")
+    collection_type: str = Field(default="home", description="Service type")
+    address: Optional[Union[str, Dict[str, str]]] = Field(default=None, description="Property address")
+
+
 @tool("create_order", args_schema=CreateOrderSchema)
 def create_order(
     instagram_id: str,
@@ -922,7 +935,7 @@ def create_payment_link(
         print(f"🔧 CREATE_PAYMENT_LINK DEBUG: Generated payment_id={payment_id}")
         
         # Get BASE_URL from environment or use fallback
-        base_url = os.getenv('BASE_URL', 'https://dev-payments.krsnaa.com')
+        base_url = os.getenv('BASE_URL', 'https://dev-payments.centuryproptax.com')
         payment_link = f"{base_url}/mock-payment/{payment_id}"
         
         print(f"🔧 CREATE_PAYMENT_LINK DEBUG: BASE_URL={base_url}")
@@ -942,7 +955,7 @@ def create_payment_link(
                     "phone": customer_phone,
                     "email": customer_email or f"{customer_phone}@placeholder.com"
                 },
-                "description": f"Krsnaa Diagnostics - Medical Tests for Order {order_id}",
+                "description": f"Century PropTax - Property Tax Services for Order {order_id}",
                 "reference_id": order_id,
                 "created_at": datetime.now().timestamp(),
                 "expire_by": expires_at.timestamp(),
@@ -1063,7 +1076,7 @@ async def check_report_status(
                 
                 if booking.status == "completed" and days_since_booking >= 1:
                     report_status = "Ready"
-                    download_link = f"https://reports.krsnaa.com/download/{booking.booking_id}"
+                    download_link = f"https://reports.centuryproptax.com/download/{booking.booking_id}"
                 elif booking.status == "sample_collected" and days_since_booking >= 1:
                     report_status = "Processing" 
                     download_link = None
@@ -1173,6 +1186,14 @@ async def confirm_order_cash_payment(
 # 1. **Pay Online**: Secure payment via UPI, Cards, Net Banking (recommended for instant confirmation)
 # 2. **Cash on Collection**: Pay when our technician arrives (home collection only)
 # This eliminates 28 lines of static data that LLM can present contextually
+
+
+class ScheduleSampleCollectionSchema(BaseModel):
+    """Schema for scheduling property tax service collection"""
+    order_id: str = Field(description="Order ID for the service")
+    preferred_date: str = Field(description="Preferred service date")
+    preferred_time: Optional[str] = Field(default=None, description="Preferred service time")
+    address: Optional[str] = Field(default=None, description="Service address")
 
 
 @tool("schedule_sample_collection", args_schema=ScheduleSampleCollectionSchema, parse_docstring=True)

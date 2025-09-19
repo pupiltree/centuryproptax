@@ -62,7 +62,6 @@ from agents.simplified.enhanced_workflow_tools import (
     create_payment_link,
     
     # Additional workflow support tools
-    schedule_property_inspection,
     verify_customer_payment
     # REMOVED: get_payment_options - LLM handles payment options naturally
 )
@@ -287,7 +286,6 @@ def create_property_tax_assistant():
         create_payment_link,
         
         # Additional workflow support
-        schedule_property_inspection,
         verify_customer_payment,
         # REMOVED: get_payment_options - LLM handles payment options naturally
 

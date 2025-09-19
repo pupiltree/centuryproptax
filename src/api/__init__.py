@@ -1,1 +1,1 @@
-"""API package for Krsnaa Diagnostics chatbot."""
+"""API package for property tax chatbot."""

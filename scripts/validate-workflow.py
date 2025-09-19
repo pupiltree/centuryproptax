@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Workflow Validation Script for Krsnaa Diagnostics Chatbot
+Workflow Validation Script for Century PropTax Chatbot
 Validates that all required components are implemented according to the mermaid diagram.
 """
 
@@ -210,7 +210,7 @@ def validate_compliance_features():
 
 def main():
     """Run complete workflow validation."""
-    print("🚀 Krsnaa Diagnostics Chatbot - Complete Workflow Validation")
+    print("🚀 Century PropTax Chatbot - Complete Workflow Validation")
     print("=" * 65)
     
     validation_results = []

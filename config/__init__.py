@@ -1,1 +1,1 @@
-"""Configuration module for Krsnaa Chatbot"""
+"""Configuration module for Century PropTax Chatbot"""

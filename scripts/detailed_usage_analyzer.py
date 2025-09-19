@@ -150,8 +150,8 @@ class DetailedUsageAnalyzer:
         }
 
     def analyze_medical_remnants(self) -> Dict[str, Any]:
-        """Analyze medical/Krishna Diagnostics remnants."""
-        print("Analyzing medical/Krishna Diagnostics remnants...")
+        """Analyze medical/Krishna legacy remnants."""
+        print("Analyzing medical/Krishna legacy remnants...")
 
         medical_references = defaultdict(list)
         medical_files = set()

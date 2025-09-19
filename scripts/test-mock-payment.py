@@ -22,7 +22,7 @@ async def test_mock_payment_link_creation():
         "customer_name": "John Doe",
         "customer_phone": "9876543210",
         "customer_email": "john@example.com",
-        "description": "Test payment for Krsnaa Diagnostics"
+        "description": "Test payment for Century PropTax"
     })
     
     if result["success"]:

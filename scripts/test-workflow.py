@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Complete End-to-End Workflow Test for Krsnaa Diagnostics Chatbot
+Complete End-to-End Workflow Test for Century PropTax Chatbot
 Tests all workflow paths according to the mermaid diagram.
 """
 
@@ -123,7 +123,7 @@ async def test_payment_options():
     )
     
     assert payment_result["success"] == True
-    assert "payments.krsnaa.com" in payment_result["payment_link"]
+    assert "payments.centuryproptax.com" in payment_result["payment_link"]
     print(f"  ✅ Payment link: {payment_result['payment_link']}")
     
     return payment_result["payment_id"]
@@ -222,7 +222,7 @@ def test_workflow_state_transitions():
 
 async def main():
     """Run complete workflow tests."""
-    print("🚀 Starting Complete Workflow Tests for Krsnaa Diagnostics Chatbot")
+    print("🚀 Starting Complete Workflow Tests for Century PropTax Chatbot")
     print("=" * 70)
     
     try:

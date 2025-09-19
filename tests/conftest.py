@@ -1,22 +1,20 @@
 """
-Test configuration and fixtures for the automation engine tests.
+Test configuration and fixtures for property tax tools tests.
 """
 
 import pytest
 import asyncio
 import tempfile
 import os
+import sys
+from pathlib import Path
 from typing import Dict, Any
 import yaml
 import json
 
-from engine.core.state_manager import StateManagerFactory, StateManagerConfig, StateBackend
-from engine.generator.config_generator import ConfigurationGenerator
-from engine.core.message_handler import MessageHandlerRegistry, Message, MessagePlatform, MessageDirection, MessageType
-from engine.monitoring.metrics import MetricsCollector
-from engine.monitoring.analytics import AnalyticsEngine
-from engine.security.auth import AuthManager, User, UserRole
-from engine.api.app import EngineAPI
+# Add project root to path for imports
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
 @pytest.fixture(scope="session")
 def event_loop():
@@ -40,30 +38,17 @@ async def temp_db():
         pass
 
 @pytest.fixture
-async def memory_state_manager():
-    """Create in-memory state manager for testing"""
-    config = StateManagerConfig(backend=StateBackend.MEMORY)
-    manager = StateManagerFactory.create_manager(config)
-    await manager.initialize()
-    
-    yield manager
-    
-    await manager.cleanup()
-
-@pytest.fixture
-async def sqlite_state_manager(temp_db):
-    """Create SQLite state manager for testing"""
-    config = StateManagerConfig(
-        backend=StateBackend.SQLITE,
-        database_path=temp_db,
-        async_mode=False
-    )
-    manager = StateManagerFactory.create_manager(config)
-    await manager.initialize()
-    
-    yield manager
-    
-    await manager.cleanup()
+def mock_state_data():
+    """Mock state data for testing"""
+    return {
+        "conversation_id": "test_conv_123",
+        "user_id": "test_user_456",
+        "property_data": {
+            "address": "123 Main St, Houston, TX",
+            "value": 400000,
+            "county": "harris"
+        }
+    }
 
 @pytest.fixture
 def sample_config():
@@ -113,102 +98,17 @@ def sample_config():
     }
 
 @pytest.fixture
-def config_generator():
-    """Configuration generator for testing"""
-    # Mock configuration generator without real API keys
-    return ConfigurationGenerator(
-        provider="openai",
-        model_name="gpt-4o-mini",
-        api_key="test_key",
-        temperature=0.1
-    )
-
-@pytest.fixture
-def message_registry():
-    """Message handler registry for testing"""
-    return MessageHandlerRegistry()
-
-@pytest.fixture
-def sample_messages():
-    """Sample messages for testing"""
-    return [
-        Message(
-            id="msg_1",
-            platform=MessagePlatform.INSTAGRAM,
-            direction=MessageDirection.INBOUND,
-            user_id="user_123",
-            conversation_id="conv_123",
-            message_type=MessageType.TEXT,
-            content={"text": "Hello, I need help"},
-            timestamp=1234567890.0
-        ),
-        Message(
-            id="msg_2",
-            platform=MessagePlatform.WHATSAPP,
-            direction=MessageDirection.OUTBOUND,
-            user_id="user_456",
-            conversation_id="conv_456",
-            message_type=MessageType.TEXT,
-            content={"text": "How can I assist you today?"},
-            timestamp=1234567891.0
-        )
-    ]
-
-@pytest.fixture
-def metrics_collector():
-    """Metrics collector for testing"""
-    return MetricsCollector(retention_seconds=300)  # 5 minutes for testing
-
-@pytest.fixture
-def analytics_engine():
-    """Analytics engine for testing"""
-    return AnalyticsEngine()
-
-@pytest.fixture
-def auth_manager():
-    """Authentication manager for testing"""
-    return AuthManager()
-
-@pytest.fixture
-def test_user(auth_manager):
-    """Create a test user"""
-    return auth_manager.create_user(
-        username="testuser",
-        password="testpass123",
-        email="test@example.com",
-        role=UserRole.USER
-    )
-
-@pytest.fixture
-def admin_user(auth_manager):
-    """Create an admin user"""
-    return auth_manager.create_user(
-        username="admin",
-        password="adminpass123", 
-        email="admin@example.com",
-        role=UserRole.ADMIN
-    )
-
-@pytest.fixture
-async def engine_api(sample_config, memory_state_manager):
-    """Engine API instance for testing"""
-    config = {
-        "state": {
-            "backend": "memory"
-        },
-        "llm": {
-            "provider": "openai",
-            "model": "gpt-4o-mini",
-            "api_key": "test_key"
-        }
+def property_tax_config():
+    """Property tax specific configuration for testing"""
+    return {
+        "counties": ["harris", "dallas", "travis", "bexar", "tarrant", "collin"],
+        "property_types": ["residential", "commercial", "agricultural"],
+        "test_addresses": [
+            "123 Main St, Houston, TX",
+            "456 Oak Ave, Dallas, TX",
+            "789 Pine Rd, Austin, TX"
+        ]
     }
-    
-    api = EngineAPI(config)
-    await api.initialize()
-    
-    yield api
-    
-    await api.cleanup()
 
 @pytest.fixture
 def test_requirements():
@@ -233,45 +133,21 @@ def test_requirements():
     """
 
 @pytest.fixture
-def webhook_data():
-    """Sample webhook data for testing"""
+def whatsapp_webhook_data():
+    """WhatsApp webhook data for testing"""
     return {
-        "instagram": {
-            "entry": [{
-                "messaging": [{
-                    "sender": {"id": "123456789"},
-                    "recipient": {"id": "987654321"},
-                    "timestamp": 1234567890000,
-                    "message": {
-                        "mid": "msg_id_123",
-                        "text": "Hello, I need help with my order"
-                    }
-                }]
+        "entry": [{
+            "changes": [{
+                "value": {
+                    "messages": [{
+                        "id": "wamid.123",
+                        "from": "1234567890",
+                        "timestamp": "1234567890",
+                        "text": {"body": "I need help with my property tax"}
+                    }]
+                }
             }]
-        },
-        "whatsapp": {
-            "entry": [{
-                "changes": [{
-                    "value": {
-                        "messages": [{
-                            "id": "wamid.123",
-                            "from": "1234567890",
-                            "timestamp": "1234567890",
-                            "text": {"body": "Hi, can you help me?"}
-                        }]
-                    }
-                }]
-            }]
-        },
-        "telegram": {
-            "message": {
-                "message_id": 123,
-                "from": {"id": 123456789, "first_name": "John"},
-                "chat": {"id": 123456789, "type": "private"},
-                "date": 1234567890,
-                "text": "Hello bot!"
-            }
-        }
+        }]
     }
 
 @pytest.fixture
@@ -318,27 +194,22 @@ def invalid_configs():
     }
 
 # Helper functions for tests
-def create_test_message(
-    platform: MessagePlatform = MessagePlatform.INSTAGRAM,
-    direction: MessageDirection = MessageDirection.INBOUND,
-    message_type: MessageType = MessageType.TEXT,
-    content: Dict[str, Any] = None,
-    user_id: str = "test_user"
-) -> Message:
-    """Create a test message"""
-    if content is None:
-        content = {"text": "Test message"}
-    
-    return Message(
-        id=f"test_msg_{hash(str(content))}",
-        platform=platform,
-        direction=direction,
-        user_id=user_id,
-        conversation_id=f"conv_{user_id}",
-        message_type=message_type,
-        content=content,
-        timestamp=1234567890.0
-    )
+def create_test_property_data(
+    address: str = "123 Main St, Houston, TX",
+    value: int = 400000,
+    county: str = "harris",
+    property_type: str = "residential"
+) -> Dict[str, Any]:
+    """Create test property data"""
+    return {
+        "address": address,
+        "current_assessed_value": value,
+        "county_code": county,
+        "property_type": property_type,
+        "year_built": 2005,
+        "square_footage": 2000,
+        "lot_size": 0.25
+    }
 
 async def wait_for_async(coro, timeout: float = 5.0):
     """Wait for async operation with timeout"""

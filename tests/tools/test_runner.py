@@ -100,10 +100,10 @@ async def test_tool_integration():
         print("\n🔄 Testing Basic Workflow Integration")
 
         # Step 1: Validate a property
-        property_result = await property_validation_tool(
-            search_query="123 Main Street, Houston, TX",
-            search_type="auto"
-        )
+        property_result = await property_validation_tool.ainvoke({
+            "search_query": "123 Main Street, Houston, TX",
+            "search_type": "auto"
+        })
 
         assert property_result["success"], "Property validation failed"
         print("✅ Property validation successful")
@@ -112,49 +112,49 @@ async def test_tool_integration():
             property_data = property_result["property_data"]
 
             # Step 2: Calculate savings for the property
-            savings_result = await savings_calculator_tool(
-                property_value=property_data["current_assessed_value"],
-                county_code="harris",
-                property_type="residential"
-            )
+            savings_result = await savings_calculator_tool.ainvoke({
+                "property_value": property_data["current_assessed_value"],
+                "county_code": "harris",
+                "property_type": "residential"
+            })
 
             assert savings_result["success"], "Savings calculation failed"
             print("✅ Savings calculation successful")
 
             # Step 3: Qualify as a lead
-            lead_result = await lead_qualification_tool(
-                property_value=property_data["current_assessed_value"],
-                county_code="harris",
-                property_type="residential"
-            )
+            lead_result = await lead_qualification_tool.ainvoke({
+                "property_value": property_data["current_assessed_value"],
+                "county_code": "harris",
+                "property_type": "residential"
+            })
 
             assert lead_result["success"], "Lead qualification failed"
             print("✅ Lead qualification successful")
 
             # Step 4: Check deadlines
-            deadline_result = await deadline_tracking_tool(
-                county_code="harris",
-                tracking_type="all"
-            )
+            deadline_result = await deadline_tracking_tool.ainvoke({
+                "county_code": "harris",
+                "tracking_type": "all"
+            })
 
             assert deadline_result["success"], "Deadline tracking failed"
             print("✅ Deadline tracking successful")
 
             # Step 5: Test document processing
-            doc_result = await document_processing_tool(
-                document_content="Sample property tax document",
-                document_type="appraisal_notice"
-            )
+            doc_result = await document_processing_tool.ainvoke({
+                "document_content": "Sample property tax document",
+                "document_type": "appraisal_notice"
+            })
 
             assert doc_result["success"], "Document processing failed"
             print("✅ Document processing successful")
 
             # Step 6: Test consultation scheduling
-            consultation_result = await consultation_scheduling_tool(
-                appointment_type="initial_consultation",
-                county="harris",
-                property_type="residential"
-            )
+            consultation_result = await consultation_scheduling_tool.ainvoke({
+                "appointment_type": "initial_consultation",
+                "county": "harris",
+                "property_type": "residential"
+            })
 
             assert consultation_result["success"], "Consultation scheduling failed"
             print("✅ Consultation scheduling successful")
@@ -166,11 +166,11 @@ async def test_tool_integration():
             print("⚠️  Property not found, testing with default values")
 
             # Test with default values
-            savings_result = await savings_calculator_tool(
-                property_value=400000,
-                county_code="harris",
-                property_type="residential"
-            )
+            savings_result = await savings_calculator_tool.ainvoke({
+                "property_value": 400000,
+                "county_code": "harris",
+                "property_type": "residential"
+            })
 
             assert savings_result["success"], "Savings calculation with defaults failed"
             print("✅ Integration tests with defaults successful")
@@ -235,10 +235,10 @@ async def test_ai_framework_integration():
         print("✅ Tools follow LangChain @tool pattern")
 
         # Test that tools can be called asynchronously (required for AI framework)
-        result = await property_validation_tool(
-            search_query="test address",
-            search_type="auto"
-        )
+        result = await property_validation_tool.ainvoke({
+            "search_query": "test address",
+            "search_type": "auto"
+        })
 
         assert isinstance(result, dict), "Tool should return dictionary"
         assert "success" in result, "Tool should include success field"
@@ -246,10 +246,10 @@ async def test_ai_framework_integration():
         print("✅ Tools return properly structured responses")
 
         # Test error handling (AI framework requires graceful error handling)
-        error_result = await property_validation_tool(
-            search_query="",
-            search_type="invalid_type"
-        )
+        error_result = await property_validation_tool.ainvoke({
+            "search_query": "",
+            "search_type": "invalid_type"
+        })
 
         # Should not raise exception, should return error in response
         assert isinstance(error_result, dict), "Error handling should return dict"

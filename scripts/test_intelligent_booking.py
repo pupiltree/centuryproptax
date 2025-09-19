@@ -148,7 +148,7 @@ async def test_intelligent_booking():
 
 if __name__ == "__main__":
     # Note: This test requires database setup, but will show the date parsing logic
-    print("🚀 Krsnaa Diagnostics - Intelligent Booking Test\n")
+    print("🚀 Century PropTax - Intelligent Booking Test\n")
     print("📝 Note: This test shows the date parsing logic.")
     print("📝 Database operations may fail without proper setup, but date parsing will work.\n")
     

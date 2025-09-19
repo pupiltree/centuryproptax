@@ -101,7 +101,7 @@ PROPERTY_TAX_TEMPLATES = {
         Language.ENGLISH: {
             "homestead": "The Texas Homestead Exemption provides a minimum $40,000 reduction in your home's assessed value for property tax purposes. You must apply by April 30th and the property must be your primary residence as of January 1st.",
             "senior": "Senior citizens (65 and older) qualify for additional exemptions and tax ceiling protection. Once you turn 65, your school taxes are frozen at that level. You must apply with your county appraisal district.",
-            "disability": "Disabled persons may qualify for exemptions similar to senior citizens. You'll need documentation from a qualified physician. The application process includes medical verification and annual certification.",
+            "disability": "Disabled persons may qualify for exemptions similar to senior citizens. You'll need documentation from a qualified medical professional. The application process includes medical verification and annual certification.",
             "veteran": "Veterans and their families may qualify for various exemptions depending on disability rating and service history. Benefits range from partial to complete property tax exemptions for qualifying veterans.",
             "application_process": "Exemption applications are typically due by April 30th. You'll need to provide documentation proving eligibility. Once approved, exemptions continue automatically unless your circumstances change."
         },

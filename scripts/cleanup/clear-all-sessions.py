@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Clear ALL user sessions from Redis for Krsnaa Diagnostics.
+Clear ALL user sessions from Redis for Century PropTax.
 """
 
 import redis
