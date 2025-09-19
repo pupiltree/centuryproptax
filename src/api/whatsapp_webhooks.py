@@ -599,3 +599,55 @@ async def whatsapp_health():
             "status": "error",
             "message": str(e)
         }
+
+
+@router.post("/test-template/{phone_number}")
+async def test_template_message(phone_number: str, template_type: str = "menu"):
+    """Test property tax template messages (development endpoint)."""
+    try:
+        from services.messaging.property_tax_templates import get_property_tax_templates
+        templates = get_property_tax_templates()
+
+        # Remove any formatting from phone number
+        clean_phone = phone_number.replace("+", "").replace("-", "").replace(" ", "")
+
+        if template_type == "menu":
+            result = await templates.send_service_options_menu(clean_phone)
+        elif template_type == "assessment_buttons":
+            result = await templates.send_quick_actions_buttons(clean_phone, "assessment")
+        elif template_type == "payment_buttons":
+            result = await templates.send_quick_actions_buttons(clean_phone, "payment")
+        elif template_type == "appeal_checklist":
+            result = await templates.send_appeal_document_checklist(clean_phone)
+        elif template_type == "property_lookup":
+            # Test with sample property data
+            sample_property = {
+                "address": "123 Main St, Anytown, TX 75001",
+                "owner": "John Doe",
+                "assessed_value": 250000,
+                "tax_year": "2024",
+                "due_amount": 3500,
+                "due_date": "December 31, 2024"
+            }
+            result = await templates.send_property_lookup_result(clean_phone, sample_property)
+        elif template_type == "payment_options":
+            result = await templates.send_payment_options(clean_phone, "3,500", "December 31, 2024")
+        else:
+            return {
+                "error": "Invalid template type",
+                "available_types": ["menu", "assessment_buttons", "payment_buttons", "appeal_checklist", "property_lookup", "payment_options"]
+            }
+
+        return {
+            "template_type": template_type,
+            "phone_number": clean_phone,
+            "result": result
+        }
+
+    except Exception as e:
+        logger.error(f"Template test error: {e}")
+        return {
+            "error": str(e),
+            "template_type": template_type,
+            "phone_number": phone_number
+        }

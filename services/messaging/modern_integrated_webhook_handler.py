@@ -82,6 +82,11 @@ class ModernIntegratedWebhookHandler:
                 message_type=message_type
             )
 
+            # Handle interactive messages (button clicks, list selections)
+            if message_type == "interactive":
+                await self._handle_interactive_message(sender_id, message_data)
+                return
+
             # Handle non-text messages
             if message_type != "text":
                 await self._handle_media_message(sender_id, message_data)
@@ -146,6 +151,119 @@ class ModernIntegratedWebhookHandler:
 
         await self.whatsapp_client.send_text_message(sender_id, response_text)
 
+    async def _handle_interactive_message(self, sender_id: str, message_data: Dict[str, Any]):
+        """Handle interactive message responses (button clicks, list selections)."""
+        try:
+            from services.messaging.property_tax_templates import get_property_tax_templates
+            templates = get_property_tax_templates()
+
+            interactive_data = message_data.get("interactive", {})
+            interactive_type = interactive_data.get("type")
+
+            if interactive_type == "button_reply":
+                # Handle button clicks
+                button_reply = interactive_data.get("button_reply", {})
+                button_id = button_reply.get("id", "")
+                button_title = button_reply.get("title", "")
+
+                self.logger.info(f"Button clicked: {button_id} - {button_title}")
+
+                # Route based on button ID
+                if button_id == "view_assessment":
+                    await templates.send_property_lookup_result(sender_id, {})
+                elif button_id == "file_appeal":
+                    await templates.send_appeal_document_checklist(sender_id)
+                elif button_id == "schedule_review":
+                    await self._handle_consultation_scheduling(sender_id)
+                elif button_id == "pay_now":
+                    await self._handle_payment_initiation(sender_id)
+                elif button_id == "payment_plan":
+                    await templates.send_payment_options(sender_id, "TBD", "TBD")
+                elif button_id == "payment_info":
+                    await templates.send_property_lookup_result(sender_id, {})
+                elif button_id == "check_assessment":
+                    await templates.send_property_lookup_result(sender_id, {})
+                elif button_id == "payment_status":
+                    await templates.send_payment_options(sender_id, "TBD", "TBD")
+                elif button_id == "talk_to_expert":
+                    await self._handle_expert_consultation(sender_id)
+                else:
+                    # Convert button click to text message for assistant processing
+                    await self._process_converted_interactive(sender_id, button_title or button_id)
+
+            elif interactive_type == "list_reply":
+                # Handle list selections
+                list_reply = interactive_data.get("list_reply", {})
+                selection_id = list_reply.get("id", "")
+                selection_title = list_reply.get("title", "")
+
+                self.logger.info(f"List item selected: {selection_id} - {selection_title}")
+
+                # Route based on selection ID
+                if selection_id == "assessment_review":
+                    await templates.send_property_lookup_result(sender_id, {})
+                elif selection_id == "appeal_process":
+                    await templates.send_appeal_guidance(sender_id, "Property Owner", "TBD", "TBD")
+                elif selection_id == "payment_info":
+                    await templates.send_payment_options(sender_id, "TBD", "TBD")
+                elif selection_id == "payment_plans":
+                    await templates.send_payment_options(sender_id, "TBD", "TBD")
+                elif selection_id == "schedule_consultation":
+                    await self._handle_consultation_scheduling(sender_id)
+                elif selection_id == "document_review":
+                    await templates.send_appeal_document_checklist(sender_id)
+                else:
+                    # Convert selection to text message for assistant processing
+                    await self._process_converted_interactive(sender_id, selection_title or selection_id)
+
+        except Exception as e:
+            self.logger.error(f"Error handling interactive message: {e}")
+            # Send fallback response
+            await self.whatsapp_client.send_text_message(
+                sender_id,
+                "I understood your selection. How can I help you with your property tax needs?"
+            )
+
+    async def _process_converted_interactive(self, sender_id: str, interaction_text: str):
+        """Process interactive message as text through the assistant."""
+        try:
+            # Get session ID
+            session_id = self._get_session_id(sender_id, "whatsapp")
+
+            # Process through property tax assistant
+            response = await process_property_tax_message(
+                message=f"User selected: {interaction_text}",
+                customer_id=sender_id,
+                session_id=session_id
+            )
+
+            # Send response
+            await self._send_whatsapp_response(sender_id, response)
+
+        except Exception as e:
+            self.logger.error(f"Error processing converted interactive message: {e}")
+
+    async def _handle_consultation_scheduling(self, sender_id: str):
+        """Handle consultation scheduling request."""
+        await self.whatsapp_client.send_text_message(
+            sender_id,
+            "I'd be happy to help you schedule a consultation with our property tax experts. What specific property tax issue would you like to discuss?"
+        )
+
+    async def _handle_payment_initiation(self, sender_id: str):
+        """Handle payment initiation request."""
+        await self.whatsapp_client.send_text_message(
+            sender_id,
+            "To process your payment, I'll need your property information. Please provide your property address or parcel number."
+        )
+
+    async def _handle_expert_consultation(self, sender_id: str):
+        """Handle expert consultation request."""
+        await self.whatsapp_client.send_text_message(
+            sender_id,
+            "I'll connect you with one of our property tax experts. Please describe your specific question or concern so I can route you to the right specialist."
+        )
+
     def _handle_status_update(self, status_data: Dict[str, Any]):
         """Handle WhatsApp message status updates."""
         self.logger.debug(
@@ -171,13 +289,65 @@ class ModernIntegratedWebhookHandler:
 
         return persistent_session_id
 
-    async def _send_whatsapp_response(self, recipient_id: str, response: Dict[str, Any]):
-        """Send response to WhatsApp user."""
+    async def _try_send_interactive_response(self, recipient_id: str, response: Dict[str, Any]) -> bool:
+        """Try to send interactive response using templates. Returns True if interactive message was sent."""
         try:
+            from services.messaging.property_tax_templates import get_property_tax_templates
+            templates = get_property_tax_templates()
+
+            response_text = response.get("response") or response.get("text") or ""
+            response_lower = response_text.lower()
+
+            # Check for service menu trigger
+            if any(keyword in response_lower for keyword in ["how can i help", "what can i do", "services", "property tax services"]):
+                result = await templates.send_service_options_menu(recipient_id)
+                return result.get("success", False)
+
+            # Check for assessment-related responses
+            if any(keyword in response_lower for keyword in ["assessment", "property value", "evaluated", "appeal"]):
+                result = await templates.send_quick_actions_buttons(recipient_id, "assessment")
+                return result.get("success", False)
+
+            # Check for payment-related responses
+            if any(keyword in response_lower for keyword in ["payment", "pay", "due", "bill", "amount"]):
+                result = await templates.send_quick_actions_buttons(recipient_id, "payment")
+                return result.get("success", False)
+
+            # Check for document checklist trigger
+            if any(keyword in response_lower for keyword in ["appeal documents", "what documents", "document checklist"]):
+                result = await templates.send_appeal_document_checklist(recipient_id)
+                return result.get("success", False)
+
+            # Check for property lookup results
+            if "property information" in response_lower or "property details" in response_lower:
+                # For now, send empty property data - this would be populated by actual property data
+                result = await templates.send_property_lookup_result(recipient_id, {})
+                return result.get("success", False)
+
+            return False  # No interactive message sent
+
+        except Exception as e:
+            self.logger.error(f"Error trying to send interactive response: {e}")
+            return False
+
+    async def _send_whatsapp_response(self, recipient_id: str, response: Dict[str, Any]):
+        """Send response to WhatsApp user with template support."""
+        try:
+            # Check if this response should trigger a template or interactive message
+            interactive_sent = await self._try_send_interactive_response(recipient_id, response)
+
+            if interactive_sent:
+                self.logger.info(
+                    "Interactive WhatsApp message sent",
+                    recipient_id=recipient_id[:5] + "***",
+                    interactive_type="template_or_buttons"
+                )
+                return
+
             # Extract response text
             response_text = response.get("response") or response.get("text") or "I apologize, but I'm having trouble processing your request right now."
 
-            # Send message via WhatsApp Business API
+            # Send regular text message
             result = await self.whatsapp_client.send_text_message(recipient_id, response_text)
 
             if result["success"]:

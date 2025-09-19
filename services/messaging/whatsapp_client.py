@@ -246,7 +246,17 @@ class WhatsAppClient:
             elif message.get("type") == "contacts":
                 parsed_message["contacts"] = message.get("contacts", [])
             elif message.get("type") == "interactive":
-                parsed_message["interactive"] = message.get("interactive", {})
+                # Parse interactive message (button clicks, list selections)
+                interactive = message.get("interactive", {})
+                parsed_message["interactive"] = interactive
+
+                # Extract the actual interaction data for easy access
+                if "button_reply" in interactive:
+                    button_reply = interactive["button_reply"]
+                    parsed_message["text"] = f"Button: {button_reply.get('title', button_reply.get('id', 'Unknown'))}"
+                elif "list_reply" in interactive:
+                    list_reply = interactive["list_reply"]
+                    parsed_message["text"] = f"Selected: {list_reply.get('title', list_reply.get('id', 'Unknown'))}"
             
             self.logger.info(f"Parsed WhatsApp message from {parsed_message['from'][:5]}*** ({parsed_message['type']})")
             return parsed_message
