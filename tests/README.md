@@ -1,6 +1,6 @@
 # Test Suite
 
-This directory contains comprehensive tests for the AI Chatbot Automation Engine.
+This directory contains comprehensive tests for the Century Property Tax AI Assistant.
 
 ## Test Structure
 
@@ -69,14 +69,16 @@ pytest tests/test_config_generator.py::TestConfigurationGenerator::test_initiali
 ## Test Categories
 
 ### Unit Tests
-- `test_config_generator.py` - Configuration generation logic
-- `test_state_manager.py` - State persistence and management  
-- `test_message_handler.py` - Message parsing and routing
-- `test_security.py` - Authentication, permissions, validation, encryption
-- `test_monitoring.py` - Metrics collection and analytics
+- Property tax tool tests - All 6 specialized tools
+- WhatsApp message handling tests
+- Payment processing tests (Razorpay & Mock)
+- Conversation flow tests
+- Database and state management tests
 
 ### API Tests
-- `test_api.py` - FastAPI endpoints and middleware
+- WhatsApp webhook endpoint tests
+- Health check and analytics tests
+- Report management API tests
 
 ### Integration Tests (Future)
 - End-to-end workflow tests
@@ -126,26 +128,27 @@ Tests are marked with categories:
 ## Mock Strategy
 
 Tests use mocking for:
-- External API calls (OpenAI, Instagram, etc.)
+- External API calls (Gemini AI, WhatsApp Business API)
+- Payment gateway interactions (Razorpay)
 - File system operations
 - Network requests
 - Time-dependent operations
-- Database connections (where appropriate)
 
 Real implementations are used for:
-- Core business logic
-- Data structures and models
-- Internal calculations
-- State management logic
+- Property tax calculation logic
+- WhatsApp message processing
+- LangGraph conversation flows
+- Database models and persistence
+- Property validation algorithms
 
 ## Coverage Goals
 
 Target coverage levels:
-- Core business logic: 95%+
-- API endpoints: 90%+
-- Security components: 95%+
-- Message handling: 90%+
-- Configuration logic: 95%+
+- Property tax tools: 95%+
+- WhatsApp API integration: 90%+
+- Payment processing: 95%+
+- Conversation flows: 90%+
+- Database operations: 95%+
 - Overall project: 85%+
 
 ## Continuous Testing
