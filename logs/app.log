@@ -1,0 +1,7 @@
+2025-09-19 01:30:29,228 - INFO - {"timeout": 3.0, "max_batch_size": 5, "event": "Message batcher initialized", "level": "info"}
+2025-09-19 01:30:31,346 - ERROR - {"component": "razorpay_service", "event": "Razorpay credentials not configured", "level": "error"}
+2025-09-19 01:30:31,436 - INFO - {"component": "modern_webhook_handler", "features": ["supervisor_routing", "llm_driven", "no_hardcoded_logic"], "event": "Modern LangGraph supervisor webhook handler initialized", "level": "info"}
+2025-09-19 01:30:31,451 - WARNING - Payment routes not available: No module named 'app'
+2025-09-19 01:30:31,454 - WARNING - ⚠️ Payment system routes not loaded
+2025-09-19 01:30:31,454 - WARNING - ⚠️ Ticket management routes not loaded: No module named 'app'
+2025-09-19 01:30:31,464 - INFO - ✅ Report management system loaded
