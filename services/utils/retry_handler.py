@@ -9,8 +9,9 @@ from functools import wraps
 from typing import Type, Tuple, Callable, Any, Optional, Union, List
 from datetime import datetime
 import structlog
+from src.core.logging import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger("retry_handler")
 
 class RetryExhaustedError(Exception):
     """Raised when all retry attempts are exhausted."""

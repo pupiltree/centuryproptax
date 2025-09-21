@@ -12,6 +12,7 @@ from datetime import datetime, timedelta
 import structlog
 
 from langchain_core.tools import tool
+from src.core.logging import get_logger
 
 # Import Razorpay (will need to be installed)
 try:
@@ -32,7 +33,7 @@ except ImportError:
 # Import mock Razorpay as fallback
 from services.payments.mock_razorpay import create_mock_razorpay_payment_link, verify_mock_payment_completion
 
-logger = structlog.get_logger()
+logger = get_logger("razorpay_integration")
 
 
 class RazorpayService:

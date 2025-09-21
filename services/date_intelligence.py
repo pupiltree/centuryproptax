@@ -7,14 +7,15 @@ import re
 from datetime import datetime, date, timedelta
 from typing import Dict, Any, Optional, Tuple, List
 import structlog
+from src.core.logging import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger("date_intelligence")
 
 class DateIntelligenceService:
     """Service for parsing natural language dates and managing booking constraints."""
     
     def __init__(self):
-        self.logger = logger.bind(component="date_intelligence")
+        self.logger = logger
         
         # Business configuration
         self.business_hours = {
