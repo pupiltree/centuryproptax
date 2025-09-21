@@ -13,8 +13,9 @@ from config.response_templates import (
     PropertyTaxScenario, Language, get_template,
     detect_language_from_message, get_legal_disclaimer
 )
+from src.core.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger("conversation_flows")
 
 class ConversationStage(Enum):
     """Conversation stages for property tax interactions"""

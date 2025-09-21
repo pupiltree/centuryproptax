@@ -34,8 +34,9 @@ from services.utils.retry_handler import (
     payment_circuit_breaker,
     RetryExhaustedError
 )
+from src.core.logging import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger("enhanced_workflow_tools")
 
 # ZIP Code Service Areas (expandable)
 SERVICEABLE_ZIPS = {

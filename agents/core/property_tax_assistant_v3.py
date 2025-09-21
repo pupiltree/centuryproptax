@@ -33,6 +33,9 @@ from langchain_core.prompts import ChatPromptTemplate
 from config.ai_configuration import get_ai_config, PropertyTaxDomain
 from agents.core.guardrails import get_guardrails, apply_guardrails
 from config.response_templates import get_template, PropertyTaxScenario, detect_language_from_message
+from src.core.logging import get_logger
+
+logger = get_logger("property_tax_assistant")
 
 # Import workflow-compliant tools
 from agents.simplified.enhanced_workflow_tools import (
@@ -106,8 +109,6 @@ Average wait time: 2-3 minutes"""
     except Exception as e:
         logger.error(f"Error escalating to human agent: {e}")
         return "I'm arranging for a specialist to help you. Please give me a moment to connect you with the right person."
-
-logger = structlog.get_logger()
 
 
 # Custom tool node that automatically injects Instagram ID
