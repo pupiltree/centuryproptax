@@ -13,8 +13,9 @@ import structlog
 
 from .database import UserAnalytics, CustomerProfile, MessageHistory
 from .repositories import CustomerRepository
+from src.core.logging import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger("analytics_repository")
 
 
 class AnalyticsRepository:
@@ -22,7 +23,7 @@ class AnalyticsRepository:
     
     def __init__(self, session: AsyncSession):
         self.session = session
-        self.logger = logger.bind(component="analytics_repository")
+        self.logger = logger
     
     async def start_user_journey(
         self,

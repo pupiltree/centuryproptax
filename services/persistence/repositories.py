@@ -16,8 +16,12 @@ from .database import (
     CustomerProfile, PropertyAssessmentService, PropertyAssessmentRequest, MessageHistory,
     Property, PropertyOwner, TaxAssessment, Appeal, Payment, TaxBill
 )
+from src.core.logging import get_logger
 
-logger = structlog.get_logger()
+customer_logger = get_logger("customer_repository")
+service_logger = get_logger("property_assessment_service_repository")
+request_logger = get_logger("property_assessment_request_repository")
+message_logger = get_logger("message_history_repository")
 
 
 class CustomerRepository:
@@ -25,7 +29,7 @@ class CustomerRepository:
     
     def __init__(self, session: AsyncSession):
         self.session = session
-        self.logger = logger.bind(component="customer_repository")
+        self.logger = customer_logger
     
     async def get_by_whatsapp_id(self, whatsapp_id: str) -> Optional[CustomerProfile]:
         """Get customer by WhatsApp ID."""
@@ -171,7 +175,7 @@ class PropertyAssessmentServiceRepository:
 
     def __init__(self, session: AsyncSession):
         self.session = session
-        self.logger = logger.bind(component="property_assessment_service_repository")
+        self.logger = service_logger
 
     async def search_services(
         self,
@@ -274,7 +278,7 @@ class PropertyAssessmentRequestRepository:
 
     def __init__(self, session: AsyncSession):
         self.session = session
-        self.logger = logger.bind(component="property_assessment_request_repository")
+        self.logger = request_logger
 
     async def create_request(
         self,
@@ -449,7 +453,7 @@ class MessageHistoryRepository:
     
     def __init__(self, session: AsyncSession):
         self.session = session
-        self.logger = logger.bind(component="message_history_repository")
+        self.logger = message_logger
     
     async def save_message(
         self,

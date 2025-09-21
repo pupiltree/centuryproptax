@@ -10,8 +10,9 @@ from datetime import datetime, timedelta
 import structlog
 import asyncio
 from functools import wraps
+from src.core.logging import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger("order_storage")
 
 
 def async_to_sync(async_func):
@@ -37,7 +38,7 @@ class OrderStorageService:
     def __init__(self, redis_url: str = "redis://localhost:6379/0"):
         """Initialize order storage service."""
         self.redis_url = redis_url
-        self.logger = logger.bind(component="order_storage")
+        self.logger = logger
         
         try:
             # Initialize Redis connection

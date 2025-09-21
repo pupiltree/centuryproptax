@@ -20,8 +20,9 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.orm import DeclarativeBase, relationship, Mapped, mapped_column
 from sqlalchemy.sql import func
+from src.core.logging import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger("database_manager")
 
 
 class PropertyType(str, Enum):
@@ -828,7 +829,7 @@ class DatabaseManager:
             database_url: SQLAlchemy database URL
         """
         self.database_url = database_url
-        self.logger = logger.bind(component="database_manager")
+        self.logger = logger
         
         # Create async engine
         self.engine: AsyncEngine = create_async_engine(

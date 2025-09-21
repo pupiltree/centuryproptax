@@ -8,8 +8,9 @@ import redis
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 import structlog
+from src.core.logging import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger("redis_conversation_store")
 
 
 class RedisConversationStore:
@@ -25,7 +26,7 @@ class RedisConversationStore:
         """
         self.ttl_hours = ttl_hours
         self.ttl_seconds = ttl_hours * 3600
-        self.logger = logger.bind(component="redis_conversation_store")
+        self.logger = logger
         
         try:
             # Use official redis-py with decode_responses=True for easier handling
