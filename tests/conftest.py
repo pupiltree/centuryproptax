@@ -214,3 +214,115 @@ def create_test_property_data(
 async def wait_for_async(coro, timeout: float = 5.0):
     """Wait for async operation with timeout"""
     return await asyncio.wait_for(coro, timeout=timeout)
+
+
+# Logging test fixtures
+@pytest.fixture(scope="function")
+def temp_log_directory():
+    """Provide a temporary directory for logging tests"""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        yield temp_dir
+
+
+@pytest.fixture(scope="function")
+def clean_logging_state():
+    """Reset logging state before and after each test"""
+    import logging
+
+    # Store original state
+    original_handlers = logging.getLogger().handlers.copy()
+    original_level = logging.getLogger().level
+
+    # Clear handlers before test
+    logging.getLogger().handlers.clear()
+
+    # Reset our module's global state
+    if 'core.logging' in sys.modules:
+        import core.logging as logging_module
+        logging_module._logging_configured = False
+
+    yield
+
+    # Cleanup after test
+    logging.getLogger().handlers.clear()
+    for handler in original_handlers:
+        logging.getLogger().addHandler(handler)
+    logging.getLogger().setLevel(original_level)
+
+    if 'core.logging' in sys.modules:
+        import core.logging as logging_module
+        logging_module._logging_configured = False
+
+
+@pytest.fixture(scope="function")
+def isolated_environment():
+    """Provide isolated environment variables for tests"""
+    original_env = os.environ.copy()
+
+    # Clear logging-related environment variables
+    for key in ['LOG_LEVEL', 'LOG_DIR', 'LOG_FILE_ENABLED']:
+        if key in os.environ:
+            del os.environ[key]
+
+    yield
+
+    # Restore original environment
+    os.environ.clear()
+    os.environ.update(original_env)
+
+
+@pytest.fixture(scope="function")
+def logging_test_setup(temp_log_directory, clean_logging_state, isolated_environment):
+    """Combined fixture for comprehensive logging test setup"""
+    yield temp_log_directory
+
+
+# Test markers for categorizing tests
+def pytest_configure(config):
+    """Configure pytest markers"""
+    config.addinivalue_line(
+        "markers", "unit: marks tests as unit tests"
+    )
+    config.addinivalue_line(
+        "markers", "integration: marks tests as integration tests"
+    )
+    config.addinivalue_line(
+        "markers", "slow: marks tests as slow running"
+    )
+    config.addinivalue_line(
+        "markers", "requires_docker: marks tests that require Docker"
+    )
+    config.addinivalue_line(
+        "markers", "requires_root: marks tests that require root privileges"
+    )
+
+
+# Skip Docker tests if Docker is not available
+def pytest_collection_modifyitems(config, items):
+    """Modify test collection to handle conditional skips"""
+    import shutil
+
+    skip_docker = pytest.mark.skip(reason="Docker not available")
+
+    for item in items:
+        if "requires_docker" in item.keywords:
+            if not shutil.which("docker"):
+                item.add_marker(skip_docker)
+
+
+@pytest.fixture(scope="session")
+def docker_available():
+    """Check if Docker is available"""
+    import shutil
+    return shutil.which("docker") is not None
+
+
+@pytest.fixture(scope="session")
+def root_available():
+    """Check if running as root or with sudo access"""
+    import subprocess
+    try:
+        subprocess.run(['sudo', '-n', 'true'], check=True, capture_output=True)
+        return True
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return False
