@@ -15,8 +15,9 @@ from fastapi import APIRouter, Request, Response, HTTPException
 from fastapi.responses import PlainTextResponse
 
 from services.communication.message_handler import message_handler
+from src.core.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger("business_webhooks")
 
 router = APIRouter()
 

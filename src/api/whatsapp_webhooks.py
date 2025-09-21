@@ -10,8 +10,9 @@ import structlog
 from datetime import datetime
 from services.messaging.whatsapp_client import get_whatsapp_client
 from services.messaging.modern_integrated_webhook_handler import modern_integrated_webhook_handler
+from src.core.logging import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger("whatsapp_webhooks")
 
 # In-memory cache for processed message IDs (prevents duplicate processing)
 processed_messages = set()

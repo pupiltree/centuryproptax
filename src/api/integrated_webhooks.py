@@ -9,8 +9,9 @@ from fastapi import APIRouter, Request, Response, HTTPException
 from fastapi.responses import PlainTextResponse
 
 from services.messaging.modern_integrated_webhook_handler import modern_integrated_webhook_handler
+from src.core.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger("integrated_webhooks")
 
 router = APIRouter()
 

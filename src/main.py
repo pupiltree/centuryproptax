@@ -36,7 +36,8 @@ structlog.configure(
     cache_logger_on_first_use=True,
 )
 
-logger = logging.getLogger(__name__)
+from src.core.logging import get_logger
+logger = get_logger("main_app")
 
 # Import webhook routers  
 from src.api.integrated_webhooks import router as integrated_webhooks_router
