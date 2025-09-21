@@ -15,8 +15,9 @@ from services.data_acquisition.document_processor import ProcessedDocument
 from services.vector_store.citation_tracker import PropertyTaxCitationTracker, get_citation_tracker
 from .legal_text_cleaner import LegalTextCleaner
 from .taxonomy_builder import PropertyTaxTaxonomyBuilder
+from src.core.logging import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger("content_processor")
 
 @dataclass
 class KnowledgeEntry:

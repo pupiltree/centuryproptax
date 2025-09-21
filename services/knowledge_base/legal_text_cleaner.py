@@ -9,8 +9,9 @@ from typing import List, Dict, Any, Optional, Tuple, Set
 from dataclasses import dataclass
 import structlog
 from datetime import datetime
+from src.core.logging import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger("legal_text_cleaner")
 
 @dataclass
 class CleaningRule:

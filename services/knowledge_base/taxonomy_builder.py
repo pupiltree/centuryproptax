@@ -12,8 +12,9 @@ import json
 from pathlib import Path
 from collections import defaultdict, Counter
 import re
+from src.core.logging import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger("taxonomy_builder")
 
 @dataclass
 class TaxonomyNode:

@@ -15,8 +15,9 @@ from langchain_core.documents import Document
 
 from .legal_document_indexer import LegalDocumentVectorStore, get_legal_vector_store
 from .property_tax_embeddings import PropertyTaxEmbeddings, get_property_tax_embeddings
+from src.core.logging import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger("semantic_search")
 
 class SearchType(Enum):
     """Types of search strategies"""

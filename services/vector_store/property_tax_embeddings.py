@@ -19,8 +19,9 @@ except ImportError:
     GOOGLE_EMBEDDINGS_AVAILABLE = False
 
 from langchain_core.embeddings import DeterministicFakeEmbedding, Embeddings
+from src.core.logging import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger("property_tax_embeddings")
 
 @dataclass
 class PropertyTaxTermMapping:

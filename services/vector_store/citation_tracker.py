@@ -12,8 +12,9 @@ import re
 import json
 from pathlib import Path
 from collections import defaultdict
+from src.core.logging import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger("citation_tracker")
 
 @dataclass
 class LegalCitation:

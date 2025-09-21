@@ -14,8 +14,9 @@ import json
 
 from .content_processor import KnowledgeEntry
 from services.vector_store.citation_tracker import PropertyTaxCitationTracker, get_citation_tracker
+from src.core.logging import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger("quality_validator")
 
 class ValidationSeverity(Enum):
     """Severity levels for validation issues"""

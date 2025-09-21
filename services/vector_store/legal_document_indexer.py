@@ -15,8 +15,9 @@ from langchain_core.embeddings import DeterministicFakeEmbedding
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 from services.data_acquisition.document_processor import ProcessedDocument
+from src.core.logging import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger("legal_document_indexer")
 
 class LegalDocumentVectorStore:
     """Enhanced vector store for Texas property tax legal documents"""
