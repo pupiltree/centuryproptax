@@ -17,9 +17,11 @@ import tempfile
 import gzip
 import shutil
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Dict, Any, Union
 import structlog
 from structlog.stdlib import LoggerFactory
+import traceback
+import uuid
 
 
 class CompressedRotatingFileHandler(logging.handlers.RotatingFileHandler):
@@ -228,6 +230,9 @@ def configure_logging() -> None:
             structlog.stdlib.filter_by_level,
             structlog.stdlib.add_log_level,
             structlog.stdlib.PositionalArgumentsFormatter(),
+            structlog.processors.TimeStamper(fmt="iso"),
+            _add_structured_fields,
+            _validate_structured_format,
             structlog.processors.JSONRenderer()
         ],
         context_class=dict,
@@ -241,6 +246,170 @@ def configure_logging() -> None:
     root_logger.info(f"Logging configured - Level: {logging.getLevelName(log_level)}")
     root_logger.info(f"Log directory: {log_dir}")
     root_logger.info(f"File logging: {'enabled' if file_enabled else 'disabled'}")
+
+
+# Structured logging standards and validation
+
+# Mandatory fields for all log entries (after processing)
+MANDATORY_FIELDS = {'timestamp', 'level', 'component', 'event', 'message'}
+
+# Optional contextual fields for business logic
+OPTIONAL_FIELDS = {
+    'user_id', 'request_id', 'correlation_id', 'session_id', 'trace_id',
+    'log_event', 'error_type', 'error_message', 'stack_trace'
+}
+
+# System fields added by structlog processors
+SYSTEM_FIELDS = {'_validation_warning', '_extra_fields'}
+
+# All recognized log fields
+VALID_FIELDS = MANDATORY_FIELDS | OPTIONAL_FIELDS | SYSTEM_FIELDS
+
+
+def _add_structured_fields(logger, method_name, event_dict):
+    """
+    Add mandatory structured logging fields to log entries.
+
+    This processor ensures all log entries have the required structured format
+    with mandatory fields for machine parsing and monitoring.
+    """
+    # The main log message comes from structlog's 'event' field after PositionalArgumentsFormatter
+    main_message = event_dict.get('event', '')
+
+    # If 'event' field is not provided as a keyword argument, default it
+    if 'log_event' not in event_dict and 'event' in event_dict:
+        # If the main message looks like an event (no spaces, short), use it as event
+        if isinstance(main_message, str) and len(main_message.split()) == 1 and len(main_message) < 50:
+            event_dict['log_event'] = main_message
+        else:
+            event_dict['log_event'] = 'log_message'
+
+    # Rename user's 'event' to 'log_event' if it exists to avoid conflicts
+    if 'event' in event_dict and 'log_event' not in event_dict:
+        # Check if 'event' was provided by user as a keyword arg
+        pass  # Keep original structlog 'event' as the message
+
+    # Ensure message field contains the main log message
+    if 'message' not in event_dict:
+        event_dict['message'] = main_message
+
+    return event_dict
+
+
+def _validate_structured_format(logger, method_name, event_dict):
+    """
+    Validate that log entries follow structured logging standards.
+
+    This processor ensures all mandatory fields are present and warns about
+    unknown fields that might indicate inconsistent logging patterns.
+    """
+    # Check for mandatory fields
+    missing_fields = MANDATORY_FIELDS - set(event_dict.keys())
+    if missing_fields:
+        # Add warning about missing fields but don't block the log
+        event_dict['_validation_warning'] = f"Missing mandatory fields: {missing_fields}"
+
+    # Check for unknown fields (informational only)
+    unknown_fields = set(event_dict.keys()) - VALID_FIELDS - {'_validation_warning'}
+    if unknown_fields:
+        # This is informational - allows for flexibility while encouraging standards
+        event_dict['_extra_fields'] = list(unknown_fields)
+
+    return event_dict
+
+
+def create_structured_log_entry(event: str, message: str, **context) -> Dict[str, Any]:
+    """
+    Create a structured log entry with all mandatory fields.
+
+    This function helps create properly structured log entries that comply
+    with the logging standards for machine parsing and monitoring.
+
+    Args:
+        event: The event type or action being logged
+        message: Human-readable description of the event
+        **context: Additional contextual fields (user_id, request_id, etc.)
+
+    Returns:
+        Dict[str, Any]: Structured log entry with all required fields
+
+    Example:
+        >>> entry = create_structured_log_entry(
+        ...     event="user_login",
+        ...     message="User logged in successfully",
+        ...     user_id="user_123",
+        ...     request_id="req_456"
+        ... )
+        >>> logger.info(**entry)
+    """
+    # Start with mandatory fields
+    log_entry = {
+        'event': event,
+        'message': message,
+        # timestamp and level will be added by structlog processors
+        # component will be added by get_logger() binding
+    }
+
+    # Add optional contextual fields
+    for field, value in context.items():
+        if field in OPTIONAL_FIELDS:
+            log_entry[field] = value
+        else:
+            # Allow extra fields but mark them for visibility
+            log_entry[field] = value
+
+    return log_entry
+
+
+def log_error_with_trace(logger: structlog.stdlib.BoundLogger,
+                        event: str,
+                        message: str,
+                        error: Exception = None,
+                        **context) -> None:
+    """
+    Log an error with structured format and optional stack trace.
+
+    This helper ensures consistent error logging with proper structure
+    and optional stack trace information for debugging.
+
+    Args:
+        logger: Structured logger instance
+        event: The error event type
+        message: Human-readable error description
+        error: Optional exception object for stack trace
+        **context: Additional contextual fields
+
+    Example:
+        >>> try:
+        ...     # Some operation
+        ...     pass
+        ... except Exception as e:
+        ...     log_error_with_trace(
+        ...         logger,
+        ...         "database_connection_failed",
+        ...         "Failed to connect to database",
+        ...         error=e,
+        ...         user_id="user_123"
+        ...     )
+    """
+    log_data = create_structured_log_entry(event, message, **context)
+
+    if error:
+        log_data['error_type'] = type(error).__name__
+        log_data['error_message'] = str(error)
+        log_data['stack_trace'] = traceback.format_exc()
+
+    logger.error(**log_data)
+
+
+def generate_correlation_id() -> str:
+    """
+    Generate a unique correlation ID for request tracing.
+
+    Returns:
+        str: Unique correlation ID
+    """
+    return str(uuid.uuid4())
 
 
 def get_logger(component: str) -> structlog.stdlib.BoundLogger:
@@ -258,7 +427,17 @@ def get_logger(component: str) -> structlog.stdlib.BoundLogger:
 
     Example:
         >>> logger = get_logger('whatsapp_client')
-        >>> logger.info("Message sent successfully", recipient="+1234567890")
+        >>> logger.info("Message sent successfully",
+        ...              event="message_sent",
+        ...              recipient="+1234567890")
+
+        # Or using structured helper:
+        >>> entry = create_structured_log_entry(
+        ...     event="message_sent",
+        ...     message="Message sent successfully",
+        ...     recipient="+1234567890"
+        ... )
+        >>> logger.info(**entry)
     """
     # Get structlog logger and bind component
     logger = structlog.get_logger()

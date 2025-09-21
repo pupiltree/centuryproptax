@@ -107,7 +107,12 @@ A property tax specialist will be with you shortly to provide personalized assis
 Average wait time: 2-3 minutes"""
         
     except Exception as e:
-        logger.error(f"Error escalating to human agent: {e}")
+        logger.error(
+            "Error escalating to human agent",
+            log_event="escalation_error",
+            error_type=type(e).__name__,
+            error_message=str(e)
+        )
         return "I'm arranging for a specialist to help you. Please give me a moment to connect you with the right person."
 
 
@@ -155,7 +160,13 @@ class PropertyTaxToolNode:
                 )
                 
             except Exception as e:
-                logger.error(f"Tool {tool_name} error: {e}")
+                logger.error(
+                    "Tool execution error",
+                    log_event="tool_error",
+                    tool_name=tool_name,
+                    error_type=type(e).__name__,
+                    error_message=str(e)
+                )
                 tool_messages.append(
                     ToolMessage(
                         content=f"Tool execution failed: {str(e)}",

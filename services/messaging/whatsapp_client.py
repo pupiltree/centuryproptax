@@ -119,7 +119,12 @@ class WhatsAppClient:
                 "Content-Type": "application/json"
             }
             
-            self.logger.info(f"Sending WhatsApp message to {to[:5]}***")
+            self.logger.info(
+                "Sending WhatsApp message",
+                log_event="message_send_request",
+                recipient=f"{to[:5]}***",
+                message_type=message_type
+            )
             
             session = await self._get_session()
             async with session.post(
@@ -131,14 +136,25 @@ class WhatsAppClient:
                 response_data = await response.json()
                 
                 if response.status == 200:
-                    self.logger.info(f"WhatsApp message sent successfully to {to[:5]}***")
+                    self.logger.info(
+                        "WhatsApp message sent successfully",
+                        log_event="message_sent",
+                        recipient=f"{to[:5]}***",
+                        message_id=response_data.get('messages', [{}])[0].get('id', 'unknown')
+                    )
                     return {
                         "success": True,
                         "message_id": response_data.get("messages", [{}])[0].get("id"),
                         "response": response_data
                     }
                 else:
-                    self.logger.error(f"WhatsApp API error: {response.status} - {response_data}")
+                    self.logger.error(
+                        "WhatsApp API error",
+                        log_event="api_error",
+                        status_code=response.status,
+                        error_details=response_data,
+                        recipient=f"{to[:5]}***"
+                    )
                     return {
                         "success": False,
                         "error": f"WhatsApp API error: {response.status}",
