@@ -12,11 +12,75 @@ This module provides a unified logging configuration system that:
 import os
 import sys
 import logging
+import logging.handlers
 import tempfile
+import gzip
+import shutil
 from pathlib import Path
 from typing import Optional
 import structlog
 from structlog.stdlib import LoggerFactory
+
+
+class CompressedRotatingFileHandler(logging.handlers.RotatingFileHandler):
+    """
+    Custom RotatingFileHandler that compresses rotated log files using gzip.
+
+    This handler extends the standard RotatingFileHandler to automatically
+    compress older log files to save disk space while maintaining the full
+    log history for debugging purposes.
+    """
+
+    def doRollover(self):
+        """
+        Perform a rollover and compress the rotated file.
+
+        This method is called automatically when the current log file
+        exceeds the configured maximum size.
+        """
+        # Perform the standard rollover first
+        super().doRollover()
+
+        # Compress the rotated file (*.1 becomes *.1.gz)
+        if self.backupCount > 0:
+            rotated_file = f"{self.baseFilename}.1"
+            compressed_file = f"{rotated_file}.gz"
+
+            try:
+                # Compress the rotated file
+                with open(rotated_file, 'rb') as f_in:
+                    with gzip.open(compressed_file, 'wb') as f_out:
+                        shutil.copyfileobj(f_in, f_out)
+
+                # Remove the uncompressed rotated file
+                os.remove(rotated_file)
+
+                # Rename existing compressed files to maintain numbering
+                for i in range(2, self.backupCount + 1):
+                    old_compressed = f"{self.baseFilename}.{i}.gz"
+                    new_compressed = f"{self.baseFilename}.{i+1}.gz"
+
+                    if os.path.exists(old_compressed):
+                        if i == self.backupCount:
+                            # Remove the oldest file
+                            os.remove(old_compressed)
+                        else:
+                            # Rename to next number
+                            if os.path.exists(new_compressed):
+                                os.remove(new_compressed)
+                            os.rename(old_compressed, new_compressed)
+
+                # Rename the newly compressed file to .2.gz
+                if os.path.exists(compressed_file):
+                    final_compressed = f"{self.baseFilename}.2.gz"
+                    if os.path.exists(final_compressed):
+                        os.remove(final_compressed)
+                    os.rename(compressed_file, final_compressed)
+
+            except (OSError, IOError) as e:
+                # If compression fails, log the error but don't crash
+                # The uncompressed file will remain which is better than losing logs
+                pass
 
 
 def get_log_directory() -> str:
@@ -118,11 +182,18 @@ def configure_logging() -> None:
     console_handler.setLevel(log_level)
     handlers.append(console_handler)
 
-    # Add file handler if enabled
+    # Add rotating file handler if enabled
     if file_enabled:
         try:
             log_file_path = Path(log_dir) / 'app.log'
-            file_handler = logging.FileHandler(str(log_file_path))
+            # Configure rotating file handler with compression
+            # 100MB max file size, 10 backup files, UTF-8 encoding
+            file_handler = CompressedRotatingFileHandler(
+                filename=str(log_file_path),
+                maxBytes=100 * 1024 * 1024,  # 100MB
+                backupCount=10,
+                encoding='utf-8'
+            )
             file_formatter = logging.Formatter(
                 '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
             )
