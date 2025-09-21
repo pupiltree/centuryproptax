@@ -14,8 +14,9 @@ import re
 from datetime import datetime
 
 from .texas_comptroller_scraper import ScrapedDocument
+from src.core.logging import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger("county_appraisal_scraper")
 
 @dataclass
 class CountyInfo:

@@ -15,8 +15,9 @@ import json
 from .texas_comptroller_scraper import scrape_texas_comptroller_data
 from .county_appraisal_scraper import scrape_county_appraisal_data
 from .document_processor import process_scraped_documents
+from src.core.logging import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger("data_acquisition_scheduler")
 
 @dataclass
 class ScheduledJob:

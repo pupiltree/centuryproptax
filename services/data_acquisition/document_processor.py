@@ -27,8 +27,9 @@ from bs4 import BeautifulSoup
 import html
 
 from .texas_comptroller_scraper import ScrapedDocument
+from src.core.logging import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger("document_processor")
 
 @dataclass
 class ProcessedDocument:

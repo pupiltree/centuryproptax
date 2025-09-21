@@ -14,8 +14,9 @@ from bs4 import BeautifulSoup
 import re
 from datetime import datetime
 import hashlib
+from src.core.logging import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger("texas_comptroller_scraper")
 
 @dataclass
 class ScrapedDocument:
