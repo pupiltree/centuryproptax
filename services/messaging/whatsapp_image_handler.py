@@ -9,14 +9,15 @@ import structlog
 from typing import Optional, Tuple, Dict, Any
 import os
 import base64
+from src.core.logging import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger("whatsapp_image_handler")
 
 class WhatsAppImageHandler:
     """Handle WhatsApp image messages for prescription analysis."""
     
     def __init__(self):
-        self.logger = structlog.get_logger(__name__)
+        self.logger = logger
         self.access_token = os.getenv("WA_ACCESS_TOKEN")
         
     async def download_image_from_whatsapp_message(self, message_data: Dict[str, Any]) -> Optional[Tuple[bytes, str]]:

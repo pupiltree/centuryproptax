@@ -1,6 +1,6 @@
 ---
 name: remove-redundant-files
-status: backlog
+status: completed
 created: 2025-09-19T12:13:33Z
 progress: 0%
 prd: .claude/prds/remove-redundant-files.md

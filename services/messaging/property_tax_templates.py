@@ -7,15 +7,16 @@ import structlog
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from services.messaging.whatsapp_client import get_whatsapp_client
+from src.core.logging import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger("property_tax_templates")
 
 
 class PropertyTaxTemplates:
     """Property tax specific message templates for WhatsApp Business API."""
 
     def __init__(self):
-        self.logger = logger.bind(component="property_tax_templates")
+        self.logger = logger
         self.whatsapp_client = get_whatsapp_client()
 
     # ===== PRE-APPROVED TEMPLATES =====

@@ -10,14 +10,15 @@ from typing import Dict, Any, Optional, List
 import aiohttp
 import structlog
 from datetime import datetime
+from src.core.logging import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger("whatsapp_client")
 
 class WhatsAppClient:
     """WhatsApp Business Cloud API client for sending and receiving messages."""
     
     def __init__(self):
-        self.logger = logger.bind(component="whatsapp_client")
+        self.logger = logger
 
         # WhatsApp Business API configuration
         self.phone_number_id = os.getenv("WA_PHONE_NUMBER_ID", "668229953048351")

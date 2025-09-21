@@ -12,8 +12,9 @@ from datetime import datetime, timedelta
 import structlog
 
 from services.messaging.whatsapp_types import WhatsAppMessage as InstagramMessage
+from src.core.logging import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger("message_batching")
 
 
 @dataclass

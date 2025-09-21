@@ -11,8 +11,9 @@ from datetime import datetime
 from services.messaging.whatsapp_client import get_whatsapp_client
 from services.messaging.message_batching import message_batcher
 from agents.core.property_tax_assistant_v3 import process_property_tax_message
+from src.core.logging import get_logger
 
-logger = structlog.get_logger()
+logger = get_logger("whatsapp_webhook_handler")
 
 
 class ModernIntegratedWebhookHandler:
@@ -27,7 +28,7 @@ class ModernIntegratedWebhookHandler:
     """
 
     def __init__(self):
-        self.logger = logger.bind(component="whatsapp_webhook_handler")
+        self.logger = logger
 
         # Track sessions for metadata only
         self.sessions = {}
