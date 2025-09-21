@@ -7,34 +7,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
 import uvicorn
-import structlog
 
 # Load environment variables
 load_dotenv()
 
-# Configure basic logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler("logs/app.log"),
-        logging.StreamHandler()
-    ]
-)
-
-# Configure structlog properly to work with standard logging
-structlog.configure(
-    processors=[
-        structlog.stdlib.filter_by_level,
-        structlog.stdlib.add_log_level,
-        structlog.stdlib.PositionalArgumentsFormatter(),
-        structlog.processors.JSONRenderer()
-    ],
-    context_class=dict,
-    logger_factory=structlog.stdlib.LoggerFactory(),
-    wrapper_class=structlog.stdlib.BoundLogger,
-    cache_logger_on_first_use=True,
-)
+# Configure centralized logging
+from src.core.logging import configure_logging
+configure_logging()
 
 logger = logging.getLogger(__name__)
 
@@ -201,9 +180,6 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 
 if __name__ == "__main__":
-    # Create logs directory
-    os.makedirs("logs", exist_ok=True)
-    
     logger.info("📋 Starting Century Property Tax AI Assistant...")
     logger.info("📍 Production Endpoints:")
     logger.info("   GET  /webhook - WhatsApp webhook verification")
