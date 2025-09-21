@@ -1,10 +1,12 @@
 ---
 name: fix-log-issues
-status: backlog
+status: completed
 created: 2025-09-20T16:20:45Z
-progress: 0%
+completed: 2025-09-21T19:58:39Z
+progress: 100%
 prd: .claude/prds/fix-log-issues.md
 github: https://github.com//issues/20
+last_sync: 2025-09-21T19:59:37Z
 ---
 
 # Epic: fix-log-issues
