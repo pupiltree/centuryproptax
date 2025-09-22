@@ -1,11 +1,11 @@
 ---
 name: immediate-actions
-status: backlog
+status: completed
 created: 2025-09-22T10:39:14Z
-progress: 0%
+progress: 100%
 prd: .claude/prds/immediate-actions.md
 github: https://github.com/pupiltree/centuryproptax/issues/39
-last_sync: 2025-09-22T13:00:55Z
+last_sync: 2025-09-22T18:50:15Z
 ---
 
 # Epic: immediate-actions
