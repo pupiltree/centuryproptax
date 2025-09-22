@@ -5,6 +5,7 @@ created: 2025-09-21T20:34:09Z
 progress: 0%
 prd: .claude/prds/property-tax-api-not-authorized.md
 github: https://github.com//issues/30
+last_sync: 2025-09-22T08:56:54Z
 ---
 
 # Epic: property-tax-api-not-authorized
