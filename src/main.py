@@ -194,6 +194,21 @@ try:
 except ImportError as e:
     logger.warning(f"⚠️ Report management routes not loaded: {e}")
 
+# Include monitoring dashboard routes
+try:
+    from src.api.monitoring_dashboards import router as monitoring_router, setup_monitoring_dashboards
+    app.include_router(monitoring_router)
+    logger.info("✅ Production monitoring dashboards loaded")
+
+    # Initialize monitoring on startup
+    @app.on_event("startup")
+    async def initialize_monitoring():
+        await setup_monitoring_dashboards()
+        logger.info("✅ Monitoring dashboards initialized")
+
+except ImportError as e:
+    logger.warning(f"⚠️ Monitoring dashboard routes not loaded: {e}")
+
 # Mount static files for documentation portal
 import os
 if os.path.exists("docs/static"):
