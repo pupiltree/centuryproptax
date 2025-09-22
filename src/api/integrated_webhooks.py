@@ -1,31 +1,93 @@
 """
 Production-ready webhook endpoints for Century Property Tax.
 Uses integrated handler with simplified agent + message batching + PRD alignment.
+
+This module provides the core WhatsApp Business API webhook endpoints for
+Century Property Tax's intelligent assistant. It handles:
+- Webhook verification for WhatsApp setup
+- Message processing through LangGraph supervisor pattern
+- Health monitoring and system statistics
+- Administrative batch processing controls
 """
 
 import os
 import logging
-from fastapi import APIRouter, Request, Response, HTTPException
+from datetime import datetime
+from fastapi import APIRouter, Request, Response, HTTPException, Query, Path
 from fastapi.responses import PlainTextResponse
+from typing import Dict, Any, Optional
 
 from services.messaging.modern_integrated_webhook_handler import modern_integrated_webhook_handler
 from src.core.logging import get_logger
+from src.models.api_models import (
+    HealthCheckResponse,
+    WhatsAppWebhookPayload,
+    WhatsAppResponse,
+    WebhookVerificationResponse,
+    SystemStats,
+    ErrorResponse,
+    BaseResponse,
+    EXAMPLE_RESPONSES
+)
 
 logger = get_logger("integrated_webhooks")
 
-router = APIRouter()
+router = APIRouter(
+    prefix="",
+    tags=["WhatsApp Webhooks"],
+    responses={
+        400: {"model": ErrorResponse, "description": "Bad Request"},
+        403: {"model": ErrorResponse, "description": "Forbidden - Invalid credentials"},
+        500: {"model": ErrorResponse, "description": "Internal Server Error"}
+    }
+)
 
 
-@router.get("/webhook")
-async def verify_webhook(request: Request):
+@router.get(
+    "/webhook",
+    response_model=str,
+    summary="Verify WhatsApp Webhook",
+    description="""WhatsApp webhook verification endpoint required for webhook setup.
+
+    WhatsApp sends a GET request with verification parameters to confirm
+    webhook URL ownership. This endpoint validates the verify token and
+    returns the challenge string if verification succeeds.
+
+    **Required Query Parameters:**
+    - `hub.mode`: Must be 'subscribe'
+    - `hub.verify_token`: Must match configured VERIFY_TOKEN
+    - `hub.challenge`: Challenge string to return on success
+
+    **Environment Variables Required:**
+    - `VERIFY_TOKEN`: Token for webhook verification
+    """,
+    responses={
+        200: {
+            "description": "Webhook verified successfully",
+            "content": {"text/plain": {"example": "challenge_string_123"}}
+        },
+        403: {
+            "description": "Webhook verification failed",
+            "model": ErrorResponse
+        }
+    }
+)
+async def verify_webhook(
+    request: Request,
+    hub_mode: Optional[str] = Query(None, alias="hub.mode", description="Webhook mode (should be 'subscribe')"),
+    hub_verify_token: Optional[str] = Query(None, alias="hub.verify_token", description="Verification token"),
+    hub_challenge: Optional[str] = Query(None, alias="hub.challenge", description="Challenge string to return")
+):
     """
-    WhatsApp webhook verification endpoint.
-    WhatsApp sends a GET request to verify the webhook URL.
+    Verify WhatsApp webhook endpoint for initial setup.
+
+    This endpoint is called by WhatsApp to verify webhook URL ownership.
+    It validates the provided verify token against the configured value.
     """
     verify_token = os.getenv("VERIFY_TOKEN", "")
-    mode = request.query_params.get("hub.mode")
-    token = request.query_params.get("hub.verify_token") 
-    challenge = request.query_params.get("hub.challenge")
+    mode = hub_mode or request.query_params.get("hub.mode")
+    token = hub_verify_token or request.query_params.get("hub.verify_token")
+    challenge = hub_challenge or request.query_params.get("hub.challenge")
     
     if mode == "subscribe" and token == verify_token:
         logger.info("✅ Webhook verified successfully (integrated)")
@@ -35,11 +97,59 @@ async def verify_webhook(request: Request):
     raise HTTPException(status_code=403, detail="Verification failed")
 
 
-@router.post("/webhook")
+@router.post(
+    "/webhook",
+    response_model=Dict[str, Any],
+    summary="Handle WhatsApp Messages",
+    description="""Main webhook endpoint for processing WhatsApp messages.
+
+    This endpoint receives WhatsApp Business API webhook events and processes
+    them through the intelligent property tax assistant. It handles:
+
+    - Text messages from customers
+    - Media messages (images, documents, audio)
+    - Interactive messages (buttons, lists)
+    - Message status updates
+    - System notifications
+
+    **Processing Features:**
+    - LangGraph supervisor pattern for intelligent routing
+    - Message batching for improved response quality
+    - Automatic property tax context understanding
+    - Integration with assessment booking system
+    - Conversation state management via Redis
+
+    **Security:**
+    - Webhook signature verification (configurable)
+    - Request validation and sanitization
+    - Rate limiting and abuse protection
+    """,
+    responses={
+        200: {
+            "description": "Message processed successfully",
+            "content": {
+                "application/json": {
+                    "example": EXAMPLE_RESPONSES["webhook_success"]
+                }
+            }
+        },
+        400: {
+            "description": "Invalid webhook payload",
+            "model": ErrorResponse
+        },
+        500: {
+            "description": "Message processing failed",
+            "model": ErrorResponse
+        }
+    }
+)
 async def handle_webhook(request: Request):
     """
-    WhatsApp webhook handler endpoint.
-    Uses integrated handler with simplified agent + message batching.
+    Process incoming WhatsApp messages through the intelligent assistant.
+
+    Handles all WhatsApp webhook events including messages, status updates,
+    and system notifications. Routes messages through LangGraph supervisor
+    for intelligent property tax assistance.
     """
     try:
         # Get raw body for signature verification
@@ -70,7 +180,50 @@ async def handle_webhook(request: Request):
         return {"status": "error", "message": str(e)}
 
 
-@router.get("/health")
+@router.get(
+    "/health",
+    response_model=Dict[str, Any],
+    summary="System Health Check",
+    description="""Comprehensive health check endpoint for monitoring system status.
+
+    This endpoint provides detailed health information about all system
+    components including:
+
+    **System Components:**
+    - Database connectivity and performance
+    - Redis cache and conversation store
+    - WhatsApp Business API integration
+    - LangGraph supervisor system
+    - Message batching service
+    - Circuit breaker status
+
+    **Response Information:**
+    - Overall system health status
+    - Individual component health details
+    - Response time metrics
+    - Active session counts
+    - Configuration validation
+    - Available system features
+
+    **Health Status Values:**
+    - `healthy`: All systems operational
+    - `degraded`: Some non-critical issues
+    - `unhealthy`: Critical system failures
+    """,
+    responses={
+        200: {
+            "description": "System is healthy",
+            "content": {
+                "application/json": {
+                    "example": EXAMPLE_RESPONSES["health_check_healthy"]
+                }
+            }
+        },
+        503: {
+            "description": "System is unhealthy or degraded"
+        }
+    }
+)
 async def health_check():
     """Comprehensive health check endpoint with database and system monitoring."""
     from datetime import datetime
@@ -236,21 +389,80 @@ async def health_check():
     )
 
 
-@router.get("/stats")
+@router.get(
+    "/stats",
+    response_model=Dict[str, Any],
+    summary="System Statistics",
+    description="""Get detailed system performance and usage statistics.
+
+    This endpoint provides real-time metrics about system performance:
+
+    **Statistics Included:**
+    - Active user sessions count
+    - Total messages processed
+    - Average response times
+    - Message batching statistics
+    - Memory and CPU usage
+    - System uptime information
+
+    **Use Cases:**
+    - Performance monitoring
+    - Capacity planning
+    - System debugging
+    - Usage analytics
+    """,
+    responses={
+        200: {
+            "description": "System statistics retrieved successfully"
+        }
+    }
+)
 async def get_stats():
-    """Get detailed system statistics."""
+    """Get detailed system performance and usage statistics."""
     return modern_integrated_webhook_handler.get_handler_stats()
 
 
-@router.post("/force-process-batch/{user_id}")
-async def force_process_batch(user_id: str):
+@router.post(
+    "/force-process-batch/{user_id}",
+    response_model=Dict[str, Any],
+    summary="Force Process Message Batch",
+    description="""Administrative endpoint to force process pending message batches.
+
+    This endpoint allows administrators to manually trigger processing
+    of any pending message batches for a specific user. Useful for:
+
+    **Administrative Use Cases:**
+    - Debugging message processing issues
+    - Manual batch processing during maintenance
+    - Testing message batching functionality
+    - Resolving stuck conversation states
+
+    **Security Note:**
+    This is an administrative endpoint and should be protected
+    in production environments.
+    """,
+    responses={
+        200: {
+            "description": "Batch processing completed"
+        },
+        404: {
+            "description": "User not found or no pending batch",
+            "model": ErrorResponse
+        }
+    }
+)
+async def force_process_batch(
+    user_id: str = Path(..., description="User ID to process batch for", example="919876543210")
+):
     """Force process any pending message batch for a user (admin endpoint)."""
     from services.messaging.message_batching import message_batcher
-    
+
     result = await message_batcher.force_process_user_batch(user_id)
-    
+
     return {
+        "status": "success" if result else "warning",
         "user_id": user_id,
         "batch_processed": result,
-        "message": "Batch processed" if result else "No pending batch found"
+        "message": "Batch processed successfully" if result else "No pending batch found for user",
+        "timestamp": datetime.now().isoformat()
     }

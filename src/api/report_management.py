@@ -1,20 +1,46 @@
 """
 Assessment Report Management API endpoints for authorized personnel.
 Allows property tax staff to update assessment report status and upload report files.
+
+This module provides comprehensive assessment report management capabilities
+for Century Property Tax staff including:
+- Web-based management interface
+- Assessment report search and filtering
+- Status updates and report URL management
+- Integration with existing booking system
 """
 
 from datetime import datetime
 from typing import Dict, Any, List, Optional
 import json
 
-from fastapi import APIRouter, Depends, HTTPException, Form, File, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Form, File, UploadFile, Query
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
+from typing import Optional, Dict, Any
 
 from services.persistence.database import get_db_session
 from services.persistence.repositories import BookingRepository, CustomerRepository
+from src.models.api_models import (
+    ReportSearchRequest,
+    ReportUpdateRequest,
+    ReportSearchResponse,
+    ReportUpdateResponse,
+    BookingResponse,
+    ErrorResponse,
+    EXAMPLE_RESPONSES
+)
 
-router = APIRouter(prefix="/api/assessment-reports", tags=["Assessment Report Management"])
+router = APIRouter(
+    prefix="/api/assessment-reports",
+    tags=["Assessment Report Management"],
+    responses={
+        400: {"model": ErrorResponse, "description": "Bad Request"},
+        403: {"model": ErrorResponse, "description": "Forbidden - Access denied"},
+        404: {"model": ErrorResponse, "description": "Assessment not found"},
+        500: {"model": ErrorResponse, "description": "Internal Server Error"}
+    }
+)
 
 
 class ReportUpdateRequest(BaseModel):
@@ -32,7 +58,39 @@ class ReportSearchRequest(BaseModel):
     date_to: Optional[str] = None
 
 
-@router.get("/", response_class=HTMLResponse)
+@router.get(
+    "/",
+    response_class=HTMLResponse,
+    summary="Assessment Report Management Interface",
+    description="""Web-based management interface for assessment reports.
+
+    This endpoint provides a comprehensive web interface for authorized
+    property tax staff to manage assessment reports including:
+
+    **Management Features:**
+    - Search assessments by ID, phone number, or status
+    - Update assessment report status (pending → processing → ready → delivered)
+    - Upload and manage report URLs
+    - Add notes and comments to assessments
+    - Quick access to pending and processing assessments
+
+    **User Interface:**
+    - Responsive design for desktop and mobile
+    - Real-time search and filtering
+    - Auto-population of forms from search results
+    - Professional styling with Century Property Tax branding
+
+    **Security:**
+    - Intended for authorized personnel only
+    - Should be protected with authentication in production
+    """,
+    responses={
+        200: {
+            "description": "Management interface loaded successfully",
+            "content": {"text/html": {"example": "<html>Assessment Report Management Interface</html>"}}
+        }
+    }
+)
 async def assessment_report_management_page():
     """Assessment report management webpage for authorized personnel."""
     html_content = """
@@ -443,11 +501,50 @@ async def assessment_report_management_page():
     return html_content
 
 
-@router.get("/search")
+@router.get(
+    "/search",
+    response_model=Dict[str, Any],
+    summary="Search Assessment Reports",
+    description="""Search for assessment bookings and reports with flexible filtering.
+
+    This endpoint allows authorized staff to search through assessment
+    records using various criteria:
+
+    **Search Options:**
+    - Specific assessment ID lookup
+    - Customer phone number search
+    - Status-based filtering
+    - Date range filtering (when implemented)
+
+    **Supported Statuses:**
+    - `pending`: Assessment requested but not started
+    - `processing`: Assessment in progress
+    - `ready`: Assessment complete, report available
+    - `delivered`: Report sent to customer
+
+    **Response Format:**
+    Returns detailed assessment information including customer details,
+    assessment type, current status, and report URLs if available.
+    """,
+    responses={
+        200: {
+            "description": "Search completed successfully",
+            "content": {
+                "application/json": {
+                    "example": EXAMPLE_RESPONSES["booking_search_results"]
+                }
+            }
+        },
+        400: {
+            "description": "Invalid search parameters",
+            "model": ErrorResponse
+        }
+    }
+)
 async def search_assessment_reports(
-    booking_id: Optional[str] = None,
-    phone: Optional[str] = None,
-    status: Optional[str] = None
+    booking_id: Optional[str] = Query(None, description="Specific assessment ID to search", example="CPT20250811_A1"),
+    phone: Optional[str] = Query(None, description="Customer phone number", example="9876543210"),
+    status: Optional[str] = Query(None, description="Assessment status filter", example="ready")
 ) -> Dict[str, Any]:
     """Search for assessment bookings/reports with various filters."""
     try:
@@ -510,7 +607,57 @@ async def search_assessment_reports(
         }
 
 
-@router.post("/update")
+@router.post(
+    "/update",
+    response_model=Dict[str, Any],
+    summary="Update Assessment Report Status",
+    description="""Update the status and details of an assessment report.
+
+    This endpoint allows authorized staff to update assessment progress
+    and manage report lifecycle:
+
+    **Status Workflow:**
+    1. `pending` → Assessment requested, waiting to start
+    2. `processing` → Assessment in progress
+    3. `ready` → Assessment complete, report available
+    4. `delivered` → Report sent to customer
+
+    **Update Options:**
+    - Change assessment status
+    - Add or update report download URL
+    - Include notes about progress or issues
+    - Track status change timestamps
+
+    **Integration:**
+    - Automatically triggers customer notifications
+    - Updates conversation history in assistant
+    - Maintains audit trail of status changes
+    """,
+    responses={
+        200: {
+            "description": "Assessment report updated successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "success": True,
+                        "booking_id": "CPT20250811_A1",
+                        "status": "ready",
+                        "message": "Assessment report status updated to 'ready'",
+                        "updated_at": "2025-09-22T12:00:00Z"
+                    }
+                }
+            }
+        },
+        404: {
+            "description": "Assessment not found",
+            "model": ErrorResponse
+        },
+        400: {
+            "description": "Invalid update request",
+            "model": ErrorResponse
+        }
+    }
+)
 async def update_assessment_report_status(request: ReportUpdateRequest) -> Dict[str, Any]:
     """Update assessment report status for a specific booking."""
     try:
@@ -547,10 +694,12 @@ async def update_assessment_report_status(request: ReportUpdateRequest) -> Dict[
             
             return {
                 "success": True,
+                "status": "success",
                 "booking_id": request.booking_id,
-                "status": request.status,
+                "new_status": request.status,
                 "message": f"Assessment report status updated to '{request.status}'",
-                "updated_at": datetime.now().isoformat()
+                "updated_at": datetime.now().isoformat(),
+                "timestamp": datetime.now().isoformat()
             }
             
     except Exception as e:

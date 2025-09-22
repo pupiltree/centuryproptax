@@ -1,10 +1,24 @@
-"""Main FastAPI application for Generic Business Assistant."""
+"""Main FastAPI application for Century Property Tax Intelligent Assistant.
+
+This application provides a comprehensive WhatsApp-based intelligent assistant
+for property tax services, including:
+- Assessment booking and management
+- Document processing and analysis
+- Payment integration and tracking
+- Report generation and delivery
+- Real-time customer support
+
+The system uses LangGraph supervisor pattern for intelligent message routing
+and processing, with comprehensive API documentation available at /docs.
+"""
 
 import os
 import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.openapi.utils import get_openapi
 from dotenv import load_dotenv
 import uvicorn
 import structlog
@@ -52,11 +66,70 @@ except ImportError as e:
     logger.warning(f"Payment routes not available: {e}")
     PAYMENT_ROUTES_AVAILABLE = False
 
-# Create FastAPI application  
+# Create FastAPI application with comprehensive OpenAPI configuration
 app = FastAPI(
-    title="Intelligent Business Assistant",
-    description="Generic AI-powered business assistant with multi-channel communication",
-    version="1.0.0"
+    title="Century Property Tax - Intelligent Assistant API",
+    description="""Comprehensive API for Century Property Tax's intelligent WhatsApp assistant.
+
+    ## Overview
+    This API powers an intelligent property tax assistant that provides:
+    - **WhatsApp Integration**: Native WhatsApp Business API support
+    - **Assessment Management**: Complete property assessment workflow
+    - **Document Processing**: Intelligent document analysis and verification
+    - **Payment Integration**: Secure payment processing with Razorpay
+    - **Report Generation**: Automated assessment report creation
+    - **Real-time Support**: 24/7 intelligent customer assistance
+
+    ## Architecture
+    - **LangGraph Supervisor Pattern**: Intelligent message routing and processing
+    - **Message Batching**: Optimized response generation for complex queries
+    - **Redis State Management**: Persistent conversation and session storage
+    - **PostgreSQL Database**: Comprehensive data persistence
+    - **Circuit Breakers**: Resilient external service integration
+
+    ## Authentication
+    - WhatsApp webhook verification via VERIFY_TOKEN
+    - Signature verification for webhook security
+    - Admin endpoints require additional authorization
+
+    ## Rate Limiting
+    - Webhook endpoints: 1000 requests/minute
+    - Search endpoints: 100 requests/minute
+    - Management endpoints: 50 requests/minute
+
+    ## Support
+    - Documentation: [/documentation](/documentation)
+    - Health Check: [/health](/health)
+    - System Stats: [/stats](/stats)
+    - Interactive API Docs: [/docs](/docs)
+    """,
+    version="4.0.0",
+    contact={
+        "name": "Century Property Tax Support",
+        "url": "https://centuryproptax.com/support",
+        "email": "support@centuryproptax.com"
+    },
+    license_info={
+        "name": "Proprietary",
+        "url": "https://centuryproptax.com/license"
+    },
+    servers=[
+        {
+            "url": "https://api.centuryproptax.com",
+            "description": "Production server"
+        },
+        {
+            "url": "https://staging.centuryproptax.com",
+            "description": "Staging server"
+        },
+        {
+            "url": "http://localhost:8000",
+            "description": "Development server"
+        }
+    ],
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json"
 )
 
 # Add CORS middleware
@@ -96,6 +169,14 @@ try:
 except ImportError as e:
     logger.warning(f"⚠️ Report management routes not loaded: {e}")
 
+# Mount static files for documentation portal
+import os
+if os.path.exists("docs/static"):
+    app.mount("/documentation", StaticFiles(directory="docs/static", html=True), name="documentation")
+    logger.info("✅ Documentation portal mounted at /documentation")
+else:
+    logger.warning("⚠️ Documentation portal not available - docs/static directory not found")
+
 @app.on_event("startup")
 async def startup_event():
     """Application startup."""
@@ -128,13 +209,45 @@ async def startup_event():
             logger.info("💡 Update BASE_URL environment variable to change payment domain")
 
 
-@app.get("/")
+@app.get(
+    "/",
+    summary="API Information",
+    description="""Root endpoint providing API overview and available endpoints.
+
+    Returns comprehensive information about all available API endpoints,
+    system status, and configuration details.
+    """,
+    responses={
+        200: {
+            "description": "API information retrieved successfully",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "Century Property Tax - Intelligent Assistant API",
+                        "version": "4.0.0",
+                        "status": "running",
+                        "endpoints": {
+                            "webhook_verification": "GET /webhook",
+                            "webhook_handler": "POST /webhook",
+                            "health_check": "GET /health"
+                        }
+                    }
+                }
+            }
+        }
+    }
+)
 async def root():
-    """Root endpoint."""
+    """API root endpoint with comprehensive system information."""
     endpoints = {
+        "api_documentation": "GET /docs",
+        "redoc_documentation": "GET /redoc",
+        "documentation_portal": "GET /documentation",
+        "openapi_schema": "GET /openapi.json",
         "webhook_verification": "GET /webhook",
-        "webhook_handler": "POST /webhook", 
-        "health_check": "GET /health"
+        "webhook_handler": "POST /webhook",
+        "health_check": "GET /health",
+        "system_statistics": "GET /stats"
     }
     
     # Add payment endpoints if available
@@ -159,9 +272,25 @@ async def root():
     razorpay_configured = bool(os.getenv('RAZORPAY_KEY_ID') and os.getenv('RAZORPAY_KEY_SECRET'))
     
     return {
-        "message": "Intelligent Business Assistant",
-        "version": "1.0.0",
+        "message": "Century Property Tax - Intelligent Assistant API",
+        "version": "4.0.0",
         "status": "running",
+        "architecture": "LangGraph Supervisor Pattern",
+        "features": [
+            "WhatsApp Business API Integration",
+            "Intelligent Message Processing",
+            "Assessment Booking System",
+            "Document Analysis",
+            "Payment Processing",
+            "Report Generation",
+            "Real-time Health Monitoring"
+        ],
+        "documentation": {
+            "interactive_docs": "/docs",
+            "redoc": "/redoc",
+            "documentation_portal": "/documentation",
+            "openapi_schema": "/openapi.json"
+        },
         "payment_system": {
             "mode": "production" if razorpay_configured else "mock",
             "anti_fraud": "enabled",

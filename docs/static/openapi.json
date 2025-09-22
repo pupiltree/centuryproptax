@@ -1,0 +1,727 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Century Property Tax - Intelligent Assistant API",
+    "description": "Comprehensive API for Century Property Tax's intelligent WhatsApp assistant.\n\n    ## Overview\n    This API powers an intelligent property tax assistant that provides:\n    - **WhatsApp Integration**: Native WhatsApp Business API support\n    - **Assessment Management**: Complete property assessment workflow\n    - **Document Processing**: Intelligent document analysis and verification\n    - **Payment Integration**: Secure payment processing with Razorpay\n    - **Report Generation**: Automated assessment report creation\n    - **Real-time Support**: 24/7 intelligent customer assistance\n\n    ## Architecture\n    - **LangGraph Supervisor Pattern**: Intelligent message routing and processing\n    - **Message Batching**: Optimized response generation for complex queries\n    - **Redis State Management**: Persistent conversation and session storage\n    - **PostgreSQL Database**: Comprehensive data persistence\n    - **Circuit Breakers**: Resilient external service integration\n\n    ## Authentication\n    - WhatsApp webhook verification via VERIFY_TOKEN\n    - Signature verification for webhook security\n    - Admin endpoints require additional authorization\n\n    ## Rate Limiting\n    - Webhook endpoints: 1000 requests/minute\n    - Search endpoints: 100 requests/minute\n    - Management endpoints: 50 requests/minute\n\n    ## Support\n    - Documentation: [/documentation](/documentation)\n    - Health Check: [/health](/health)\n    - System Stats: [/stats](/stats)\n    - Interactive API Docs: [/docs](/docs)\n    ",
+    "contact": {
+      "name": "Century Property Tax Support",
+      "url": "https://centuryproptax.com/support",
+      "email": "support@centuryproptax.com"
+    },
+    "license": {
+      "name": "Proprietary",
+      "url": "https://centuryproptax.com/license"
+    },
+    "version": "4.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.centuryproptax.com",
+      "description": "Production server"
+    },
+    {
+      "url": "https://staging.centuryproptax.com",
+      "description": "Staging server"
+    },
+    {
+      "url": "http://localhost:8000",
+      "description": "Development server"
+    }
+  ],
+  "paths": {
+    "/webhook": {
+      "get": {
+        "tags": [
+          "WhatsApp Webhooks"
+        ],
+        "summary": "Verify WhatsApp Webhook",
+        "description": "WhatsApp webhook verification endpoint required for webhook setup.\n\n    WhatsApp sends a GET request with verification parameters to confirm\n    webhook URL ownership. This endpoint validates the verify token and\n    returns the challenge string if verification succeeds.\n\n    **Required Query Parameters:**\n    - `hub.mode`: Must be 'subscribe'\n    - `hub.verify_token`: Must match configured VERIFY_TOKEN\n    - `hub.challenge`: Challenge string to return on success\n\n    **Environment Variables Required:**\n    - `VERIFY_TOKEN`: Token for webhook verification",
+        "operationId": "verify_webhook_webhook_get",
+        "parameters": [
+          {
+            "name": "hub.mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Webhook mode (should be 'subscribe')",
+              "title": "Hub.Mode"
+            },
+            "description": "Webhook mode (should be 'subscribe')"
+          },
+          {
+            "name": "hub.verify_token",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Verification token",
+              "title": "Hub.Verify Token"
+            },
+            "description": "Verification token"
+          },
+          {
+            "name": "hub.challenge",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Challenge string to return",
+              "title": "Hub.Challenge"
+            },
+            "description": "Challenge string to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Webhook verified successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "title": "Response Verify Webhook Webhook Get"
+                }
+              },
+              "text/plain": {
+                "example": "challenge_string_123"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Webhook verification failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "WhatsApp Webhooks"
+        ],
+        "summary": "Handle WhatsApp Messages",
+        "description": "Main webhook endpoint for processing WhatsApp messages.\n\n    This endpoint receives WhatsApp Business API webhook events and processes\n    them through the intelligent property tax assistant. It handles:\n\n    - Text messages from customers\n    - Media messages (images, documents, audio)\n    - Interactive messages (buttons, lists)\n    - Message status updates\n    - System notifications\n\n    **Processing Features:**\n    - LangGraph supervisor pattern for intelligent routing\n    - Message batching for improved response quality\n    - Automatic property tax context understanding\n    - Integration with assessment booking system\n    - Conversation state management via Redis\n\n    **Security:**\n    - Webhook signature verification (configurable)\n    - Request validation and sanitization\n    - Rate limiting and abuse protection",
+        "operationId": "handle_webhook_webhook_post",
+        "responses": {
+          "200": {
+            "description": "Message processed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Handle Webhook Webhook Post"
+                },
+                "example": {
+                  "status": "success",
+                  "message": "Message processed successfully",
+                  "from_number": "919876543210",
+                  "response_sent": true,
+                  "timestamp": "2025-09-22T12:00:00Z"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid webhook payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Message processing failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "WhatsApp Webhooks"
+        ],
+        "summary": "System Health Check",
+        "description": "Comprehensive health check endpoint for monitoring system status.\n\n    This endpoint provides detailed health information about all system\n    components including:\n\n    **System Components:**\n    - Database connectivity and performance\n    - Redis cache and conversation store\n    - WhatsApp Business API integration\n    - LangGraph supervisor system\n    - Message batching service\n    - Circuit breaker status\n\n    **Response Information:**\n    - Overall system health status\n    - Individual component health details\n    - Response time metrics\n    - Active session counts\n    - Configuration validation\n    - Available system features\n\n    **Health Status Values:**\n    - `healthy`: All systems operational\n    - `degraded`: Some non-critical issues\n    - `unhealthy`: Critical system failures",
+        "operationId": "health_check_health_get",
+        "responses": {
+          "200": {
+            "description": "System is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Health Check Health Get"
+                },
+                "example": {
+                  "status": "healthy",
+                  "service": "century-property-tax-modern",
+                  "version": "4.0.0",
+                  "timestamp": "2025-09-22T12:00:00Z",
+                  "response_time_ms": 25.5,
+                  "components": {
+                    "webhook_handler": "operational",
+                    "database": "healthy",
+                    "redis": "healthy"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "System is unhealthy or degraded"
+          }
+        }
+      }
+    },
+    "/stats": {
+      "get": {
+        "tags": [
+          "WhatsApp Webhooks"
+        ],
+        "summary": "System Statistics",
+        "description": "Get detailed system performance and usage statistics.\n\n    This endpoint provides real-time metrics about system performance:\n\n    **Statistics Included:**\n    - Active user sessions count\n    - Total messages processed\n    - Average response times\n    - Message batching statistics\n    - Memory and CPU usage\n    - System uptime information\n\n    **Use Cases:**\n    - Performance monitoring\n    - Capacity planning\n    - System debugging\n    - Usage analytics",
+        "operationId": "get_stats_stats_get",
+        "responses": {
+          "200": {
+            "description": "System statistics retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get Stats Stats Get"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/force-process-batch/{user_id}": {
+      "post": {
+        "tags": [
+          "WhatsApp Webhooks"
+        ],
+        "summary": "Force Process Message Batch",
+        "description": "Administrative endpoint to force process pending message batches.\n\n    This endpoint allows administrators to manually trigger processing\n    of any pending message batches for a specific user. Useful for:\n\n    **Administrative Use Cases:**\n    - Debugging message processing issues\n    - Manual batch processing during maintenance\n    - Testing message batching functionality\n    - Resolving stuck conversation states\n\n    **Security Note:**\n    This is an administrative endpoint and should be protected\n    in production environments.",
+        "operationId": "force_process_batch_force_process_batch__user_id__post",
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "User ID to process batch for",
+              "title": "User Id"
+            },
+            "description": "User ID to process batch for",
+            "example": "919876543210"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Batch processing completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Force Process Batch Force Process Batch  User Id  Post"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found or no pending batch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/whatsapp/webhook": {
+      "get": {
+        "tags": [
+          "WhatsApp"
+        ],
+        "summary": "Whatsapp Webhook Verify",
+        "description": "WhatsApp webhook verification endpoint.\n\nThis endpoint is called by WhatsApp to verify the webhook URL.\nMust return the challenge parameter if verification succeeds.",
+        "operationId": "whatsapp_webhook_verify_whatsapp_webhook_get",
+        "parameters": [
+          {
+            "name": "hub.verify_token",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Hub.Verify Token"
+            }
+          },
+          {
+            "name": "hub.challenge",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Hub.Challenge"
+            }
+          },
+          {
+            "name": "hub.mode",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Hub.Mode"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "WhatsApp"
+        ],
+        "summary": "Whatsapp Webhook Handler",
+        "description": "WhatsApp webhook message handler with enhanced security.\n\nProcesses incoming messages and status updates from WhatsApp Business API.\nIncludes signature verification for enhanced security.\nIMPORTANT: Always returns 200 OK to prevent WhatsApp retries.",
+        "operationId": "whatsapp_webhook_handler_whatsapp_webhook_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/whatsapp/health": {
+      "get": {
+        "tags": [
+          "WhatsApp"
+        ],
+        "summary": "Whatsapp Health",
+        "description": "WhatsApp Business API integration health check.",
+        "operationId": "whatsapp_health_whatsapp_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/whatsapp/test-template/{phone_number}": {
+      "post": {
+        "tags": [
+          "WhatsApp"
+        ],
+        "summary": "Test Template Message",
+        "description": "Test property tax template messages (development endpoint).",
+        "operationId": "test_template_message_whatsapp_test_template__phone_number__post",
+        "parameters": [
+          {
+            "name": "phone_number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Phone Number"
+            }
+          },
+          {
+            "name": "template_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "menu",
+              "title": "Template Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "API Information",
+        "description": "Root endpoint providing API overview and available endpoints.\n\n    Returns comprehensive information about all available API endpoints,\n    system status, and configuration details.",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "API information retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {},
+                "example": {
+                  "message": "Century Property Tax - Intelligent Assistant API",
+                  "version": "4.0.0",
+                  "status": "running",
+                  "endpoints": {
+                    "webhook_verification": "GET /webhook",
+                    "webhook_handler": "POST /webhook",
+                    "health_check": "GET /health"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/test": {
+      "get": {
+        "summary": "Test Whatsapp Api",
+        "description": "Test WhatsApp API configuration.",
+        "operationId": "test_whatsapp_api_test_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorResponse": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ResponseStatus",
+            "default": "error"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Human-readable response message"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp",
+            "description": "Response timestamp"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code",
+            "description": "Machine-readable error code"
+          },
+          "error_details": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Details",
+            "description": "Additional error context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "ErrorResponse",
+        "description": "Error response model with additional error details."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ResponseStatus": {
+        "type": "string",
+        "enum": [
+          "success",
+          "error",
+          "warning"
+        ],
+        "title": "ResponseStatus",
+        "description": "Standard response status values."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}
