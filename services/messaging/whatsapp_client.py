@@ -118,7 +118,8 @@ class WhatsAppClient:
                 "Authorization": f"Bearer {self.access_token}",
                 "Content-Type": "application/json"
             }
-            
+
+            message_type = "text"  # Define message type based on payload
             self.logger.info(
                 "Sending WhatsApp message",
                 log_event="message_send_request",

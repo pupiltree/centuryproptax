@@ -74,8 +74,8 @@ async def whatsapp_webhook_handler(request: Request):
         whatsapp_client = get_whatsapp_client()
         if not whatsapp_client.verify_webhook_signature(raw_body, signature):
             logger.warning("WhatsApp webhook signature verification failed")
-            # Still return 200 OK to prevent retries - log security incident
-            return {"status": "received", "warning": "signature_verification_failed"}
+            # SECURITY: Reject invalid webhook requests
+            raise HTTPException(status_code=403, detail="Webhook signature verification failed")
 
         # Parse JSON data
         webhook_data = await request.json() if raw_body else {}

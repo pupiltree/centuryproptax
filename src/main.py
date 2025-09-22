@@ -237,6 +237,14 @@ async def startup_event():
     # Payment system status
     razorpay_configured = bool(os.getenv('RAZORPAY_KEY_ID') and os.getenv('RAZORPAY_KEY_SECRET'))
     logger.info(f"💳 Razorpay: {'✅ Configured' if razorpay_configured else '🧪 Mock Mode'}")
+
+    # AI services status
+    google_api_key = os.getenv('GOOGLE_API_KEY')
+    logger.info(f"🤖 Google AI: {'✅ Configured' if google_api_key else '❌ Missing'}")
+
+    # Database connectivity
+    database_url = os.getenv('DATABASE_URL')
+    logger.info(f"🗄️ Database: {'✅ Configured' if database_url else '❌ Missing'}")
     
     if PAYMENT_ROUTES_AVAILABLE:
         base_url = os.getenv('BASE_URL', 'https://localhost:8000')
