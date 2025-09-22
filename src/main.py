@@ -23,6 +23,12 @@ from dotenv import load_dotenv
 import uvicorn
 import structlog
 
+# Import production middleware and optimization modules
+from src.middleware.performance import setup_performance_middleware
+from src.middleware.security import setup_security_middleware
+from src.middleware.monitoring import setup_monitoring_middleware
+from src.seo.optimization import setup_seo_routes
+
 # Load environment variables
 load_dotenv()
 
@@ -132,14 +138,33 @@ app = FastAPI(
     openapi_url="/openapi.json"
 )
 
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["GET", "POST"],
-    allow_headers=["*"],
-)
+# Production environment detection
+is_production = os.getenv("ENVIRONMENT") == "production"
+
+# Set up production middleware and optimizations
+if is_production:
+    # Security middleware (includes CORS configuration)
+    setup_security_middleware(app)
+
+    # Performance optimization middleware
+    setup_performance_middleware(app)
+
+    # Monitoring and metrics middleware
+    setup_monitoring_middleware(app)
+
+    # SEO optimization routes
+    setup_seo_routes(app)
+
+    logger.info("✅ Production middleware and optimizations enabled")
+else:
+    # Development CORS configuration
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["GET", "POST"],
+        allow_headers=["*"],
+    )
 
 # Include webhook routers  
 app.include_router(integrated_webhooks_router)  # Production: Integrated LangGraph agent with Redis persistence
