@@ -11,7 +11,7 @@ import time
 import psutil
 from typing import Dict, Optional, List
 from fastapi import FastAPI, Request, Response
-from fastapi.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from prometheus_client import Counter, Histogram, Gauge, generate_latest, CONTENT_TYPE_LATEST
 import structlog
 from datetime import datetime, timedelta

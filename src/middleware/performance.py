@@ -12,7 +12,7 @@ import gzip
 import mimetypes
 from typing import Dict, Optional, Tuple
 from fastapi import FastAPI, Request, Response
-from fastapi.middleware.base import BaseHTTPMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.responses import StreamingResponse
 import structlog
 from datetime import datetime, timedelta
