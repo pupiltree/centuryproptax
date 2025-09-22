@@ -1,11 +1,11 @@
 ---
 name: property-tax-api-not-authorized
-status: backlog
+status: completed
 created: 2025-09-21T20:34:09Z
-progress: 0%
+progress: 100%
 prd: .claude/prds/property-tax-api-not-authorized.md
 github: https://github.com//issues/30
-last_sync: 2025-09-22T08:56:54Z
+last_sync: 2025-09-23T00:00:00Z
 ---
 
 # Epic: property-tax-api-not-authorized
