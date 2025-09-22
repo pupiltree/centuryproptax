@@ -98,13 +98,19 @@ class MonitoringDashboards:
             self.redis_client = redis.from_url(REDIS_URL, decode_responses=True)
             await asyncio.to_thread(self.redis_client.ping)
 
-            # Initialize database connection pool
-            self.db_pool = await asyncpg.create_pool(DATABASE_URL, min_size=1, max_size=5)
+            # Initialize database connection pool only for PostgreSQL
+            if DATABASE_URL.startswith(('postgresql', 'postgres')):
+                self.db_pool = await asyncpg.create_pool(DATABASE_URL, min_size=1, max_size=5)
+                logger.info("✅ Monitoring dashboards initialized with PostgreSQL and Redis connections")
+            else:
+                self.db_pool = None
+                logger.info("✅ Monitoring dashboards initialized with Redis connection (SQLite database)")
 
-            logger.info("✅ Monitoring dashboards initialized with database and Redis connections")
         except Exception as e:
             logger.error(f"❌ Failed to initialize monitoring connections: {e}")
-            raise
+            # Don't raise error for monitoring issues - allow app to continue
+            self.db_pool = None
+            self.redis_client = None
 
     def load_default_alerts(self):
         """Load default alert configurations."""

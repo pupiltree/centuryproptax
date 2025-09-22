@@ -20,7 +20,7 @@ from pydantic import BaseModel
 from typing import Optional, Dict, Any
 
 from services.persistence.database import get_db_session
-from services.persistence.repositories import BookingRepository, CustomerRepository
+from services.persistence.repositories import PropertyAssessmentRequestRepository as BookingRepository, CustomerRepository
 from src.models.api_models import (
     ReportSearchRequest,
     ReportUpdateRequest,
