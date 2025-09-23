@@ -37,7 +37,7 @@ class CustomerRepository:
             result = await self.session.execute(
                 select(CustomerProfile)
                 .where(CustomerProfile.whatsapp_id == whatsapp_id)
-                .options(selectinload(CustomerProfile.bookings))
+                .options(selectinload(CustomerProfile.assessment_requests))
             )
             return result.scalar_one_or_none()
         except Exception as e:
@@ -140,7 +140,7 @@ class CustomerRepository:
             await self.session.commit()
             await self.session.refresh(customer)
 
-            self.logger.info(f"Property info updated for customer: {instagram_id}")
+            self.logger.info(f"Property info updated for customer: {whatsapp_id}")
             return customer
 
         except Exception as e:

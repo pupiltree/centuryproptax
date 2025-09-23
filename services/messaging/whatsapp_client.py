@@ -554,7 +554,7 @@ class WhatsAppClient:
             payload: Raw webhook payload
             signature: X-Hub-Signature-256 header value
         """
-        if not self.app_secret or not signature:
+        if not self.app_secret or not signature or self.app_secret == "your_app_secret_here":
             self.logger.warning("App secret or signature missing - signature verification skipped")
             return True  # Allow if not configured for backward compatibility
 

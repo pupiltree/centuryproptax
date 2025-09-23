@@ -220,7 +220,7 @@ class OrderStorageService:
                 
                 # Create or update customer
                 customer = await customer_repo.create_or_update(
-                    instagram_id=order_data.get("instagram_id"),
+                    whatsapp_id=order_data.get("instagram_id"),
                     name=order_data.get("customer_name"),
                     phone=order_data.get("phone"),
                     pin_code=order_data.get("pin_code")
