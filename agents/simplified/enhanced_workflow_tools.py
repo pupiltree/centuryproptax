@@ -45,6 +45,7 @@ SERVICEABLE_ZIPS = {
     "75003": {"area": "Dallas County West", "available": True, "onsite_assessment": True},
     "75004": {"area": "Dallas County South", "available": True, "onsite_assessment": True},
     "75005": {"area": "Dallas County North", "available": True, "onsite_assessment": True},
+    "75201": {"area": "Dallas County Downtown", "available": True, "onsite_assessment": True},
     "77001": {"area": "Harris County", "available": True, "onsite_assessment": True},
     "78701": {"area": "Travis County", "available": True, "onsite_assessment": True},
     "79901": {"area": "El Paso County", "available": True, "onsite_assessment": True},
