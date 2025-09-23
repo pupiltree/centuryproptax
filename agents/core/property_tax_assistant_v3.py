@@ -39,7 +39,7 @@ logger = get_logger("property_tax_assistant")
 
 # Import workflow-compliant tools
 from agents.simplified.enhanced_workflow_tools import (
-    # F: Book Assessment - Collect PIN, date, assessment type
+    # F: Book Assessment - Collect ZIP code, date, assessment type
     validate_pin_code,
 
     # G: Assessment Enquiry - Explain assessment prep, duration, pricing
@@ -47,26 +47,17 @@ from agents.simplified.enhanced_workflow_tools import (
 
     # H: Lookup recent assessment or report
     check_report_status,
-    
+
     # I: Create ticket via /tickets
     # (We'll use complaint handling)
-    
+
     # J: Handover to agent via /handover
     # (We'll use escalation)
-    
-    
-    # O: Mark order as confirmed (Cash)
-    confirm_order_cash_payment,
-    
-    # Q: Create order via /orders
+
+    # Q: Create consultation appointment (FREE - no payment required)
     create_order,
-    
-    # T: Create Razorpay link via /payments/link
-    create_payment_link,
-    
-    # Additional workflow support tools
-    verify_customer_payment
-    # REMOVED: get_payment_options - LLM handles payment options naturally
+
+    # REMOVED: All payment-related tools - consultations are FREE and contingency-based
 )
 
 # Import Unified Property Tax RAG system for intelligent assessment enquiries (workflow node G)
