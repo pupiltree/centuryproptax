@@ -5,6 +5,7 @@ created: 2025-09-23T09:15:02Z
 progress: 0%
 prd: .claude/prds/fix-flow.md
 github: https://github.com/pupiltree/centuryproptax/issues/48
+last_sync: 2025-09-23T10:30:00Z
 ---
 
 # Epic: Fix Property Tax Chatbot Workflow
