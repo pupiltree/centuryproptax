@@ -21,7 +21,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.openapi.utils import get_openapi
 from dotenv import load_dotenv
 import uvicorn
-import structlog
 
 # Import production middleware and optimization modules
 from src.middleware.performance import setup_performance_middleware
@@ -32,29 +31,9 @@ from src.seo.optimization import setup_seo_routes
 # Load environment variables
 load_dotenv()
 
-# Configure basic logging
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.FileHandler("logs/app.log"),
-        logging.StreamHandler()
-    ]
-)
-
-# Configure structlog properly to work with standard logging
-structlog.configure(
-    processors=[
-        structlog.stdlib.filter_by_level,
-        structlog.stdlib.add_log_level,
-        structlog.stdlib.PositionalArgumentsFormatter(),
-        structlog.processors.JSONRenderer()
-    ],
-    context_class=dict,
-    logger_factory=structlog.stdlib.LoggerFactory(),
-    wrapper_class=structlog.stdlib.BoundLogger,
-    cache_logger_on_first_use=True,
-)
+# Configure centralized logging
+from src.core.logging import configure_logging
+configure_logging()
 
 from src.core.logging import get_logger
 logger = get_logger("main_app")
@@ -379,9 +358,6 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 
 if __name__ == "__main__":
-    # Create logs directory
-    os.makedirs("logs", exist_ok=True)
-    
     logger.info("📋 Starting Century Property Tax AI Assistant...")
     logger.info("📍 Production Endpoints:")
     logger.info("   GET  /webhook - WhatsApp webhook verification")

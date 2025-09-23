@@ -1,0 +1,100 @@
+# GitHub Actions workflow for continuous logging performance monitoring
+name: Logging Performance Check
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+jobs:
+  logging-performance-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install structlog pytest pytest-asyncio
+
+    - name: Run logging performance benchmarks
+      run: |
+        cd ${{ github.workspace }}
+        python scripts/run_logging_performance_summary.py
+      continue-on-error: true
+      id: performance_test
+
+    - name: Run comprehensive benchmarks (on schedule)
+      if: github.event_name == 'schedule'
+      run: |
+        cd ${{ github.workspace }}
+        python scripts/run_logging_performance_benchmarks.py quick
+      continue-on-error: true
+
+    - name: Check performance regression
+      run: |
+        cd ${{ github.workspace }}
+        python testing/performance/logging_performance_monitor.py --regression-check
+      continue-on-error: true
+      id: regression_check
+
+    - name: Comment performance results on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+
+          // Read performance test results if available
+          let comment = '## 📊 Logging Performance Results\n\n';
+
+          if ('${{ steps.performance_test.outcome }}' === 'success') {
+            comment += '✅ **Performance Test**: PASSED - Logging meets <5ms threshold\n';
+          } else {
+            comment += '⚠️ **Performance Test**: Some tests exceed performance thresholds\n';
+          }
+
+          if ('${{ steps.regression_check.outcome }}' === 'success') {
+            comment += '✅ **Regression Check**: PASSED - No performance degradation detected\n';
+          } else {
+            comment += '❌ **Regression Check**: Performance regression detected\n';
+          }
+
+          comment += '\n**Performance Targets:**\n';
+          comment += '- Single log operation: <5ms\n';
+          comment += '- API request logging: <5ms additional overhead\n';
+          comment += '- High-volume scenarios: Acceptable degradation under extreme load\n';
+
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+    - name: Upload performance artifacts
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: logging-performance-results
+        path: |
+          *.json
+          logs/
+        retention-days: 30
+
+    - name: Fail job if critical performance issues
+      if: steps.performance_test.outcome == 'failure' && github.event_name == 'pull_request'
+      run: |
+        echo "Critical performance issues detected in logging system"
+        echo "Please review and optimize before merging"
+        exit 1
