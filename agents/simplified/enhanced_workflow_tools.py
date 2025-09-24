@@ -271,85 +271,66 @@ def suggest_assessment_services(
                 # Search for services based on property type/issue
                 recommended_services = []
                 
-                # Map common conditions to search terms
-                condition_mappings = {
-                    "diabetes": ["diabetes", "blood_sugar", "glucose"],
-                    "cardiac": ["heart_disease", "high_cholesterol"], 
-                    "thyroid": ["thyroid_disorder", "fatigue", "weight_changes"],
-                    "liver": ["liver_disease", "hepatitis"],
-                    "kidney": ["kidney_disease", "high_blood_pressure"],
-                    "women": ["women_health", "hormonal_imbalance"],
-                    "general": ["general_health", "annual_checkup"],
+                # Map common property tax issues to search terms
+                issue_mappings = {
+                    "residential": ["residential", "homestead", "single_family"],
+                    "commercial": ["commercial", "business", "retail"],
+                    "appeal": ["appeal", "protest", "dispute", "valuation_challenge"],
+                    "exemption": ["exemption", "homestead_exemption", "disability"],
+                    "assessment": ["assessment", "valuation", "appraisal"],
+                    "agricultural": ["agricultural", "farm", "ranch"],
+                    "general": ["property_tax", "consultation"],
                 }
                 
-                # Find matching conditions
-                search_conditions = []
-                for key, conditions in condition_mappings.items():
-                    if any(word in condition_lower for word in key.split()) or any(cond in condition_lower for cond in conditions):
-                        search_conditions.extend(conditions)
+                # Find matching property tax issues
+                search_issues = []
+                for key, issues in issue_mappings.items():
+                    if any(word in issue_lower for word in key.split()) or any(issue in issue_lower for issue in issues):
+                        search_issues.extend(issues)
+
+                print(f"🔧 SUGGEST_SERVICES DEBUG: search_issues={search_issues}")
+
+                # For property tax services, we return predefined service recommendations
+                # Database integration would be implemented here for dynamic services
                 
-                print(f"🔧 SUGGEST_PANEL DEBUG: search_conditions={search_conditions}")
+                # If no specific issue match, do general search
+                if not search_issues:
+                    print(f"🔧 SUGGEST_SERVICES DEBUG: No issue match, using general property consultation")
+                    # Default to general property tax consultation
+                    search_issues = ["property_tax", "consultation"]
                 
-                # Search for recommended tests
-                for condition in search_conditions:
-                    tests = await test_catalog_repo.get_recommended_for_condition(condition, limit=5)
-                    recommended_tests.extend(tests)
-                
-                # If no specific condition match, do general search
-                if not recommended_tests:
-                    print(f"🔧 SUGGEST_PANEL DEBUG: No condition match, searching by keywords")
-                    # Search by general keywords
-                    search_terms = ["blood test", "health checkup", "basic health", "comprehensive"]
-                    for term in search_terms:
-                        if term in condition_lower:
-                            tests = await test_catalog_repo.search_tests(term, limit=3)
-                            recommended_tests.extend(tests)
-                            break
-                
-                # Remove duplicates and get best match
-                seen_codes = set()
-                unique_tests = []
-                for test in recommended_tests:
-                    if test.test_code not in seen_codes:
-                        unique_tests.append(test)
-                        seen_codes.add(test.test_code)
-                
-                print(f"🔧 SUGGEST_PANEL DEBUG: Found {len(unique_tests)} unique tests")
-                
-                if unique_tests:
-                    # Return the most suitable test (first one, sorted by price in repo)
-                    best_test = unique_tests[0]
-                    
-                    savings = 0
-                    if best_test.discounted_price and best_test.discounted_price < best_test.price:
-                        savings = float(best_test.price - best_test.discounted_price)
-                        savings_percent = (savings / float(best_test.price)) * 100
-                        final_price = float(best_test.discounted_price)
-                    else:
-                        savings_percent = 0
-                        final_price = float(best_test.price)
-                    
-                    print(f"✅ SUGGEST_PANEL DEBUG: Recommending {best_test.name}")
-                    
-                    return {
-                        "success": True,
-                        "panel_suggested": True,
-                        "panel_name": best_test.name,
-                        "test_code": best_test.test_code,
-                        "description": best_test.description,
-                        "tests_included": best_test.includes or [best_test.name],
-                        "category": best_test.category,
-                        "original_price": float(best_test.price),
-                        "discounted_price": final_price,
-                        "savings": savings,
-                        "savings_percent": round(savings_percent, 1),
-                        "sample_type": best_test.sample_type,
-                        "fasting_required": best_test.fasting_required,
-                        "home_collection": best_test.home_collection,
-                        "message": f"Based on your requirements, I recommend the {best_test.name}. It includes {len(best_test.includes or [best_test.name])} test(s)" + (f" and you save ₹{savings:.0f} ({savings_percent:.1f}% off)!" if savings > 0 else "!"),
-                        "tests_count": len(best_test.includes or [best_test.name]),
-                        "data_source": "database"
-                    }
+                # Return appropriate property tax service recommendation
+                if "appeal" in search_issues or "protest" in search_issues:
+                    service_type = "Property Tax Appeal Consultation"
+                    description = "Comprehensive property tax appeal and protest representation"
+                elif "exemption" in search_issues:
+                    service_type = "Homestead Exemption Consultation"
+                    description = "Property tax exemption application and compliance review"
+                elif "commercial" in search_issues:
+                    service_type = "Commercial Property Tax Assessment"
+                    description = "Specialized commercial property tax valuation review"
+                else:
+                    service_type = "General Property Tax Consultation"
+                    description = "Comprehensive property tax assessment and consultation"
+
+                print(f"✅ SUGGEST_SERVICES DEBUG: Recommending {service_type}")
+
+                return {
+                    "success": True,
+                    "service_suggested": True,
+                    "service_name": service_type,
+                    "service_code": "PROP_TAX_CONSULT",
+                    "description": description,
+                    "category": "Property Tax",
+                    "price": 0.0,
+                    "discounted_price": 0.0,
+                    "savings": 0.0,
+                    "savings_percent": 0.0,
+                    "onsite_available": True,
+                    "consultation_type": "FREE",
+                    "message": f"Based on your property situation, I recommend our {service_type}. This is a FREE consultation with contingency-based representation.",
+                    "data_source": "property_tax_services"
+                }
                 return None  # No suitable test found
         
         try:
@@ -360,50 +341,66 @@ def suggest_assessment_services(
             print(f"⚠️ SUGGEST_PANEL DEBUG: Database error: {db_error}")
             print("🔧 SUGGEST_PANEL DEBUG: Falling back to hardcoded panels")
         
-        # Fallback to hardcoded panels if database fails
-        suggested_panel = None
-        
-        if any(word in condition_lower for word in ["diabetes", "sugar", "glucose", "hba1c"]):
-            suggested_panel = ADVANCED_TEST_PANELS["diabetes"]
-        elif any(word in condition_lower for word in ["heart", "cardiac", "cholesterol", "chest pain"]):
-            suggested_panel = ADVANCED_TEST_PANELS["cardiac"]
-        elif any(word in condition_lower for word in ["thyroid", "weight", "fatigue", "hair loss"]):
-            suggested_panel = ADVANCED_TEST_PANELS["thyroid"]
-        elif any(word in condition_lower for word in ["liver", "jaundice", "alcohol", "hepatitis"]):
-            suggested_panel = ADVANCED_TEST_PANELS["liver"]
-        elif gender and gender.lower() in ["female", "woman", "f"] and any(word in condition_lower for word in ["health check", "checkup", "screening", "women", "blood test"]):
-            suggested_panel = ADVANCED_TEST_PANELS["women_health"]
-        elif gender and gender.lower() in ["male", "man", "m"] and any(word in condition_lower for word in ["health check", "checkup", "screening", "men", "blood test"]):
-            suggested_panel = ADVANCED_TEST_PANELS["men_health"]
-        elif any(word in condition_lower for word in ["health check", "checkup", "screening", "blood test", "general"]):
-            suggested_panel = ADVANCED_TEST_PANELS["thyroid"]  # Default fallback
-        
-        if suggested_panel:
-            print(f"✅ SUGGEST_PANEL DEBUG: Found hardcoded panel: {suggested_panel['panel_name']}")
-            savings = suggested_panel["price"] - suggested_panel["discounted_price"]
-            savings_percent = (savings / suggested_panel["price"]) * 100
-            
+        # Fallback to hardcoded property tax services if database fails
+        suggested_service = None
+
+        if any(word in issue_lower for word in ["appeal", "protest", "dispute", "challenge"]):
+            suggested_service = {
+                "service_name": "Property Tax Appeal Consultation",
+                "description": "Expert property tax appeal and protest representation",
+                "category": "Property Tax Appeals",
+                "price": 0.0,
+                "discounted_price": 0.0
+            }
+        elif any(word in issue_lower for word in ["exemption", "homestead", "disability"]):
+            suggested_service = {
+                "service_name": "Homestead Exemption Application",
+                "description": "Property tax exemption application and compliance review",
+                "category": "Tax Exemptions",
+                "price": 0.0,
+                "discounted_price": 0.0
+            }
+        elif any(word in issue_lower for word in ["commercial", "business", "retail", "industrial"]):
+            suggested_service = {
+                "service_name": "Commercial Property Tax Assessment",
+                "description": "Specialized commercial property tax evaluation and consultation",
+                "category": "Commercial Property Tax",
+                "price": 0.0,
+                "discounted_price": 0.0
+            }
+        else:
+            suggested_service = {
+                "service_name": "General Property Tax Consultation",
+                "description": "Comprehensive property tax assessment and guidance",
+                "category": "Property Tax Consultation",
+                "price": 0.0,
+                "discounted_price": 0.0
+            }
+
+        if suggested_service:
+            print(f"✅ SUGGEST_SERVICES DEBUG: Found hardcoded service: {suggested_service['service_name']}")
+
             return {
                 "success": True,
-                "panel_suggested": True,
-                "panel_name": suggested_panel["panel_name"],
-                "description": suggested_panel["description"],
-                "tests": suggested_panel["tests"],  # Fixed: renamed from tests_included
-                "original_price": suggested_panel["price"],
-                "discounted_price": suggested_panel["discounted_price"],
-                "savings": savings,
-                "savings_percent": round(savings_percent, 1),
-                "message": f"Based on your requirements, I recommend the {suggested_panel['panel_name']}. It includes {len(suggested_panel['tests'])} tests and you save ₹{savings} ({savings_percent:.1f}% off)!",
-                "tests_count": len(suggested_panel["tests"]),
+                "service_suggested": True,
+                "service_name": suggested_service["service_name"],
+                "description": suggested_service["description"],
+                "category": suggested_service["category"],
+                "original_price": suggested_service["price"],
+                "discounted_price": suggested_service["discounted_price"],
+                "savings": 0.0,
+                "savings_percent": 0.0,
+                "message": f"Based on your property tax situation, I recommend our {suggested_service['service_name']}. This is a FREE consultation with contingency-based representation - you only pay if we reduce your taxes!",
+                "consultation_type": "FREE",
                 "data_source": "hardcoded"
             }
         else:
-            print(f"⚠️ SUGGEST_PANEL DEBUG: No matching panel found for '{condition_lower}'")
+            print(f"⚠️ SUGGEST_SERVICES DEBUG: No matching service found for '{issue_lower}'")
             return {
                 "success": True,
-                "panel_suggested": False,
-                "message": "Let me help you find the right tests. Could you provide more details about your symptoms or what specific health concerns you have?",
-                "suggestion": "You can also opt for our general health checkup packages."
+                "service_suggested": False,
+                "message": "Let me help you with your property tax situation. Could you provide more details about your property or tax concerns?",
+                "suggestion": "You can schedule a FREE property tax consultation to get started."
             }
             
     except Exception as e:
@@ -423,23 +420,23 @@ def _check_panel_pricing(test_codes: List[str], validated_tests: List[Dict]) -> 
     """Check if the requested tests match a known panel for special pricing."""
     test_codes_upper = [code.upper() for code in test_codes]
     
-    # Define panel mappings (test codes that should get panel pricing)
-    panels = {
-        "diabetes": {
-            "required_codes": ["HBA1C", "GLU_F"],  # Minimum required for diabetes panel
-            "optional_codes": ["PPBS", "INSULIN", "CPEPTIDE"],
-            "panel_name": "Comprehensive Diabetes Profile",
-            "discounted_price": 999
+    # Define property tax service packages
+    packages = {
+        "comprehensive": {
+            "required_codes": ["PROP_TAX_CONSULT"],
+            "optional_codes": ["PROP_TAX_APPEAL", "PROP_TAX_EXEMPTION"],
+            "panel_name": "Comprehensive Property Tax Package",
+            "discounted_price": 0  # FREE consultation
         }
     }
     
-    for panel_key, panel_info in panels.items():
-        required_codes = panel_info["required_codes"]
-        
+    for package_key, package_info in packages.items():
+        required_codes = package_info["required_codes"]
+
         # Check if all required codes are present
         if all(code in test_codes_upper for code in required_codes):
-            print(f"🎯 PANEL_PRICING DEBUG: Found matching panel '{panel_info['panel_name']}'")
-            return panel_info
+            print(f"🎯 PACKAGE_PRICING DEBUG: Found matching package '{package_info['panel_name']}'")
+            return package_info
     
     return None
 
@@ -516,26 +513,24 @@ async def _create_order_async(
             else:
                 print(f"⚠️ CREATE_ORDER DEBUG: Could not parse date '{preferred_date}', using as-is")
         
-        # Auto-map common test names that customers might use
-        mapped_test_codes = []
-        for code in test_codes:
-            if code.upper() == "FBS" or code.lower() in ["fasting glucose", "fasting sugar"]:
-                mapped_test_codes.append("GLU_F")
-            elif code.upper() == "SUGAR" or code.lower() in ["blood sugar", "glucose"]:
-                mapped_test_codes.append("GLU_F")
-            elif code.upper() in ["HBA1C", "HBAIC", "A1C"]:
-                mapped_test_codes.append("HBA1C")
-            # Prescription test mappings
-            elif "HLA B27" in code.upper() or "HLA-B27" in code.upper():
-                mapped_test_codes.append("HLA_B27_PCR")
-            elif "MRI OF DL SPINE" in code.upper() or "MRI DL SPINE" in code.upper() or "MRI OF D L SPINE" in code.upper():
-                mapped_test_codes.append("MRI_DL_SPINE")
-            elif "MRI OF SI JOINTS" in code.upper() or "MRI SI JOINTS" in code.upper():
-                mapped_test_codes.append("MRI_SI_JOINTS")
+        # Auto-map common property tax service names that customers might use
+        mapped_service_codes = []
+        for code in test_codes:  # Note: variable name kept as test_codes for compatibility
+            if code.upper() in ["APPEAL", "PROTEST"] or code.lower() in ["property appeal", "tax protest"]:
+                mapped_service_codes.append("PROP_TAX_APPEAL")
+            elif code.upper() in ["EXEMPTION", "HOMESTEAD"] or code.lower() in ["homestead exemption", "property exemption"]:
+                mapped_service_codes.append("PROP_TAX_EXEMPTION")
+            elif code.upper() in ["CONSULTATION", "CONSULT"] or code.lower() in ["property consultation", "tax consultation"]:
+                mapped_service_codes.append("PROP_TAX_CONSULT")
+            elif code.upper() in ["ASSESSMENT", "VALUATION"] or code.lower() in ["property assessment", "property valuation"]:
+                mapped_service_codes.append("PROP_TAX_ASSESSMENT")
+            elif code.upper().startswith("PROP_TAX"):
+                mapped_service_codes.append(code.upper())
             else:
-                mapped_test_codes.append(code.upper())
+                # Default to general consultation for any unrecognized service
+                mapped_service_codes.append("PROP_TAX_CONSULT")
         
-        test_codes = mapped_test_codes
+        test_codes = mapped_service_codes  # Use mapped property tax service codes
         print(f"🔧 CREATE_ORDER DEBUG: Mapped test codes: {test_codes}")
         
         # Validate PIN code first
@@ -581,56 +576,29 @@ async def _create_order_async(
                         })
                         print(f"✅ CREATE_ORDER DEBUG: Added {test_code} - Property Tax Consultation - FREE")
             else:
-                # Look up each test in the database
-                for test_code in test_codes:
-                    test_upper = test_code.upper()
-                    print(f"🔍 CREATE_ORDER DEBUG: Looking up test {test_upper}")
-                
-                    # Search for test by code or name
-                    test = await test_catalog_repo.get_by_code(test_upper)
-
-                    if not test:
-                        # Try searching by name if code lookup fails
-                        search_results = await test_catalog_repo.search_tests(test_upper, limit=1)
-                        test = search_results[0] if search_results else None
-                
-                    if test and test.available:
-                        test_info = {
-                            "code": test.test_code,
-                            "name": test.name,
-                            "description": test.description,
-                            "price": float(test.price),
-                            "discounted_price": float(test.discounted_price) if test.discounted_price is not None else float(test.price),
-                            "sample_type": test.sample_type,
-                            "fasting_required": test.fasting_required,
-                            "home_collection": test.home_collection,
-                            "category": test.category
-                        }
-                        validated_tests.append(test_info)
-                        price_to_use = float(test.discounted_price) if test.discounted_price is not None else float(test.price)
-                        total_amount += price_to_use
-                        print(f"✅ CREATE_ORDER DEBUG: Added {test.name} - ₹{price_to_use}")
-                    else:
-                        not_found_tests.append(test_code)
-                        print(f"⚠️ CREATE_ORDER DEBUG: Test not found or unavailable: {test_code}")
+                # Handle other service codes (non-property tax services are not supported)
+                for service_code in test_codes:
+                    service_upper = service_code.upper()
+                    print(f"🔍 CREATE_ORDER DEBUG: Service not supported: {service_upper}")
+                    not_found_tests.append(service_code)
             
-            # Check if tests match a known panel for special pricing
-            panel_pricing = _check_panel_pricing(test_codes, validated_tests)
-            if panel_pricing:
-                total_amount = panel_pricing["discounted_price"]
-                print(f"💰 CREATE_ORDER DEBUG: Applied panel pricing: {panel_pricing['panel_name']} - ₹{total_amount}")
+            # Check if services match a known package for special pricing
+            package_pricing = _check_panel_pricing(test_codes, validated_tests)
+            if package_pricing:
+                total_amount = package_pricing["discounted_price"]
+                print(f"💰 CREATE_ORDER DEBUG: Applied package pricing: {package_pricing['panel_name']} - $0 (FREE)")
             
             if not validated_tests:
-                print(f"❌ CREATE_ORDER DEBUG: No valid tests found")
+                print(f"❌ CREATE_ORDER DEBUG: No valid services found")
                 return {
                     "success": False,
                     "error": "The requested service is not available.",
                     "not_found": not_found_tests,
-                    "user_friendly_suggestion": "For property tax consultations, please contact our support team.",
+                    "user_friendly_suggestion": "For property tax consultations, please use service codes starting with PROP_TAX.",
                     "retry_needed": True
                 }
         
-            print(f"✅ CREATE_ORDER DEBUG: Validated {len(validated_tests)} tests, total=₹{total_amount}")
+            print(f"✅ CREATE_ORDER DEBUG: Validated {len(validated_tests)} services, total=$0 (FREE consultations)")
             
             # Create/update customer record
             print(f"🔧 CREATE_ORDER DEBUG: Creating/updating customer record")
@@ -679,13 +647,15 @@ async def _create_order_async(
             for i, test_info in enumerate(validated_tests):
                 booking_id = f"{order_id}_T{i+1}"
                 
-                # Find the test record for the test_id - skip for property tax consultations
+                # Find the service record for the service_id - property tax consultations only
                 test_record = None
                 if test_info["code"].startswith("PROP_TAX"):
-                    # Property tax consultations don't need test records
-                    test_record = {"dummy": True}  # Create a dummy record to continue processing
+                    # Property tax consultations use dummy record for processing
+                    test_record = {"id": f"prop_tax_{i+1}", "dummy": True}
                 else:
-                    test_record = await test_catalog_repo.get_by_code(test_info["code"])
+                    # Non-property tax services are not supported
+                    print(f"⚠️ CREATE_ORDER DEBUG: Unsupported service type: {test_info['code']}")
+                    test_record = None
 
                 if test_record:
                     # Handle address conversion - ensure it's a dictionary
@@ -701,12 +671,12 @@ async def _create_order_async(
                         elif isinstance(address, dict):
                             processed_address = address
                             print(f"🔧 CREATE_ORDER DEBUG: Using provided address dict: {processed_address}")
-                    
+
                     booking = await assessment_request_repo.create_booking(
                         customer_id=customer.id,
-                        test_id=test_record.id,
+                        test_id=test_record.get("id", f"prop_tax_{i+1}"),  # Use dummy ID for property tax services
                         booking_id=booking_id,
-                        total_amount=Decimal(str(test_info["discounted_price"])),
+                        total_amount=Decimal("0.00"),  # Property tax consultations are FREE
                         preferred_date=parsed_preferred_date,
                         preferred_time=preferred_time,
                         collection_type=collection_type,
@@ -715,7 +685,7 @@ async def _create_order_async(
                     booking_ids.append(booking.booking_id)
                     print(f"✅ CREATE_ORDER DEBUG: Created booking {booking.booking_id} for {test_info['name']}")
                 else:
-                    print(f"⚠️ CREATE_ORDER DEBUG: Could not find test record for {test_info['code']}")
+                    print(f"⚠️ CREATE_ORDER DEBUG: Could not find service record for {test_info['code']}")
             
             # Prepare order data for Redis storage (for quick access)
             order_data = {
@@ -724,7 +694,7 @@ async def _create_order_async(
                 "customer_name": customer_name,
                 "phone": phone,
                 "instagram_id": instagram_id,
-                "tests_booked": validated_tests,
+                "services_booked": validated_tests,
                 "booking_ids": booking_ids,
                 "total_amount": total_amount,
                 "pin_code": pin_code,
@@ -1172,8 +1142,8 @@ async def confirm_order_cash_payment(
                 "payment_method": "Cash on Collection",
                 "status": "confirmed",
                 "bookings": confirmed_bookings,
-                "message": "Order confirmed! You can pay cash during sample collection.",
-                "next_steps": "Our phlebotomist will contact you to schedule the sample collection."
+                "message": "Property tax consultation booked! This is a FREE consultation with contingency-based representation.",
+                "next_steps": "Our property tax specialist will contact you to schedule the consultation."
             }
             
     except Exception as e:
@@ -1199,8 +1169,8 @@ class ScheduleSampleCollectionSchema(BaseModel):
     address: Optional[str] = Field(default=None, description="Service address")
 
 
-@tool("schedule_sample_collection", args_schema=ScheduleSampleCollectionSchema, parse_docstring=True)
-async def schedule_sample_collection(
+@tool("schedule_property_assessment", args_schema=ScheduleSampleCollectionSchema, parse_docstring=True)
+async def schedule_property_assessment(
     order_id: str,
     preferred_date: str,
     preferred_time: str,
@@ -1208,10 +1178,10 @@ async def schedule_sample_collection(
     special_instructions: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Schedule home sample collection appointment for confirmed medical test orders.
-    
+    Schedule property assessment appointment for confirmed property tax consultation orders.
+
     This tool manages the scheduling process including date validation, time slot availability,
-    and coordination with the phlebotomy team for sample collection at customer's location.
+    and coordination with the property tax team for on-site property assessment.
     
     Args:
         order_id: Unique order ID to schedule collection for (format: KD20250827ABCD1234)
@@ -1291,7 +1261,7 @@ async def schedule_sample_collection(
         logger.error(f"Collection scheduling error: {e}")
         return {
             "success": False,
-            "error": "Failed to schedule sample collection"
+            "error": "Failed to schedule property assessment"
         }
 
 
