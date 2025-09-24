@@ -134,7 +134,7 @@ class PropertyTaxToolNode:
             tool_args = tool_call["args"].copy()
             
             # Automatically inject instagram_id for tools that need it
-            if tool_name in ["create_order", "confirm_order_cash_payment", "create_support_ticket"]:
+            if tool_name in ["create_order", "create_support_ticket"]:
                 if instagram_id and "instagram_id" not in tool_args:
                     tool_args["instagram_id"] = instagram_id
             
@@ -279,18 +279,13 @@ def create_property_tax_assistant():
         escalate_to_human_agent,
         
         
-        # O: Cash Payment Confirmation workflow
-        confirm_order_cash_payment,
         
         # Q: Create Order workflow
         create_order,
         
-        # T: Online Payment workflow
-        create_payment_link,
-        
-        # Additional workflow support
-        verify_customer_payment,
-        # REMOVED: get_payment_options - LLM handles payment options naturally
+        # REMOVED: All payment tools - FREE contingency-based consultations only
+        # Property tax consulting operates on contingency model (30-40% of tax savings)
+        # No upfront payments or processing fees required
 
         # Property document analysis workflow
         analyze_property_document_tool,
@@ -493,8 +488,7 @@ Assistant: "Perfect! For property inspection, I need your complete property addr
 User: "123 Main Street, Apartment 4B, near Central Market downtown"
 Assistant: "Got it! Let me create your booking now..."
 [Tool: create_order]
-"Excellent! Your property tax assessment is booked for Friday. Confirming your cash payment..."
-[Tool: confirm_order_cash_payment]
+"Excellent! Your property tax protest consultation is booked for Friday."
 "✅ All set! Your assessment is confirmed for Friday. Our certified property tax specialist will visit 123 Main Street, Apt 4B at your scheduled time. This professional assessment will help you understand your property tax situation, but for complex legal matters involving appeals, we may recommend consultation with a property tax attorney."
 
 **Example 5: Multilingual Support (Hindi)**

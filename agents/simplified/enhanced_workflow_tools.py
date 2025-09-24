@@ -558,43 +558,61 @@ async def _create_order_async(
             assessment_service_repo = PropertyAssessmentServiceRepository(session)
             customer_repo = CustomerRepository(session)
             assessment_request_repo = PropertyAssessmentRequestRepository(session)
-            
+
             validated_tests = []
             total_amount = 0
             not_found_tests = []
-            
-            # Look up each test in the database
-            for test_code in test_codes:
-                test_upper = test_code.upper()
-                print(f"🔍 CREATE_ORDER DEBUG: Looking up test {test_upper}")
+
+            # Property Tax Service Bypass - skip medical test validation for property tax consultations
+            if any(code.startswith("PROP_TAX") for code in test_codes):
+                print(f"🏠 CREATE_ORDER DEBUG: Property tax consultation - bypassing medical test validation")
+                for test_code in test_codes:
+                    if test_code.startswith("PROP_TAX"):
+                        validated_tests.append({
+                            "code": test_code,
+                            "name": "Property Tax Consultation",
+                            "description": "Free property tax assessment consultation",
+                            "price": 0.0,
+                            "discounted_price": 0.0,
+                            "sample_type": "N/A",
+                            "fasting_required": False,
+                            "home_collection": collection_type == "property visit",
+                            "category": "Property Tax"
+                        })
+                        print(f"✅ CREATE_ORDER DEBUG: Added {test_code} - Property Tax Consultation - FREE")
+            else:
+                # Look up each test in the database
+                for test_code in test_codes:
+                    test_upper = test_code.upper()
+                    print(f"🔍 CREATE_ORDER DEBUG: Looking up test {test_upper}")
                 
-                # Search for test by code or name
-                test = await test_catalog_repo.get_by_code(test_upper)
+                    # Search for test by code or name
+                    test = await test_catalog_repo.get_by_code(test_upper)
+
+                    if not test:
+                        # Try searching by name if code lookup fails
+                        search_results = await test_catalog_repo.search_tests(test_upper, limit=1)
+                        test = search_results[0] if search_results else None
                 
-                if not test:
-                    # Try searching by name if code lookup fails
-                    search_results = await test_catalog_repo.search_tests(test_upper, limit=1)
-                    test = search_results[0] if search_results else None
-                
-                if test and test.available:
-                    test_info = {
-                        "code": test.test_code,
-                        "name": test.name,
-                        "description": test.description,
-                        "price": float(test.price),
-                        "discounted_price": float(test.discounted_price) if test.discounted_price is not None else float(test.price),
-                        "sample_type": test.sample_type,
-                        "fasting_required": test.fasting_required,
-                        "home_collection": test.home_collection,
-                        "category": test.category
-                    }
-                    validated_tests.append(test_info)
-                    price_to_use = float(test.discounted_price) if test.discounted_price is not None else float(test.price)
-                    total_amount += price_to_use
-                    print(f"✅ CREATE_ORDER DEBUG: Added {test.name} - ₹{price_to_use}")
-                else:
-                    not_found_tests.append(test_code)
-                    print(f"⚠️ CREATE_ORDER DEBUG: Test not found or unavailable: {test_code}")
+                    if test and test.available:
+                        test_info = {
+                            "code": test.test_code,
+                            "name": test.name,
+                            "description": test.description,
+                            "price": float(test.price),
+                            "discounted_price": float(test.discounted_price) if test.discounted_price is not None else float(test.price),
+                            "sample_type": test.sample_type,
+                            "fasting_required": test.fasting_required,
+                            "home_collection": test.home_collection,
+                            "category": test.category
+                        }
+                        validated_tests.append(test_info)
+                        price_to_use = float(test.discounted_price) if test.discounted_price is not None else float(test.price)
+                        total_amount += price_to_use
+                        print(f"✅ CREATE_ORDER DEBUG: Added {test.name} - ₹{price_to_use}")
+                    else:
+                        not_found_tests.append(test_code)
+                        print(f"⚠️ CREATE_ORDER DEBUG: Test not found or unavailable: {test_code}")
             
             # Check if tests match a known panel for special pricing
             panel_pricing = _check_panel_pricing(test_codes, validated_tests)
@@ -603,34 +621,12 @@ async def _create_order_async(
                 print(f"💰 CREATE_ORDER DEBUG: Applied panel pricing: {panel_pricing['panel_name']} - ₹{total_amount}")
             
             if not validated_tests:
-                # Get available tests for suggestion
-                available_tests = await test_catalog_repo.search_tests("", limit=10)
-                available_codes = [t.test_code for t in available_tests]
-                
                 print(f"❌ CREATE_ORDER DEBUG: No valid tests found")
-                # Create user-friendly suggestion based on not found test
-                user_friendly_suggestion = ""
-                if "FBS" in not_found_tests:
-                    user_friendly_suggestion = "For fasting glucose, please try 'GLU_F'"
-                elif "CBC" in not_found_tests:
-                    user_friendly_suggestion = "For complete blood count, the available code is 'CBC'"
-                else:
-                    # Map available codes to friendly names
-                    friendly_available = []
-                    for code in available_codes[:3]:
-                        if code == "GLU_F":
-                            friendly_available.append("Fasting Glucose (GLU_F)")
-                        elif code == "HBA1C":
-                            friendly_available.append("HbA1c Test (HBA1C)")
-                        else:
-                            friendly_available.append(code)
-                    user_friendly_suggestion = f"Available tests: {', '.join(friendly_available)}"
-                
                 return {
                     "success": False,
-                    "error": "The requested test is not available with that name.",
+                    "error": "The requested service is not available.",
                     "not_found": not_found_tests,
-                    "user_friendly_suggestion": user_friendly_suggestion,
+                    "user_friendly_suggestion": "For property tax consultations, please contact our support team.",
                     "retry_needed": True
                 }
         
@@ -683,9 +679,14 @@ async def _create_order_async(
             for i, test_info in enumerate(validated_tests):
                 booking_id = f"{order_id}_T{i+1}"
                 
-                # Find the test record for the test_id
-                test_record = await test_catalog_repo.get_by_code(test_info["code"])
-                
+                # Find the test record for the test_id - skip for property tax consultations
+                test_record = None
+                if test_info["code"].startswith("PROP_TAX"):
+                    # Property tax consultations don't need test records
+                    test_record = {"dummy": True}  # Create a dummy record to continue processing
+                else:
+                    test_record = await test_catalog_repo.get_by_code(test_info["code"])
+
                 if test_record:
                     # Handle address conversion - ensure it's a dictionary
                     processed_address = None
