@@ -6,7 +6,7 @@ completed: 2025-09-21T19:58:39Z
 progress: 100%
 prd: .claude/prds/fix-log-issues.md
 github: https://github.com/pupiltree/centuryproptax/issues/20
-last_sync: 2025-09-21T19:59:37Z
+last_sync: 2025-09-24T06:33:41Z
 ---
 
 # Epic: fix-log-issues

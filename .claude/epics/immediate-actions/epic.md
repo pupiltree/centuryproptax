@@ -5,7 +5,7 @@ created: 2025-09-22T10:39:14Z
 progress: 100%
 prd: .claude/prds/immediate-actions.md
 github: https://github.com/pupiltree/centuryproptax/issues/39
-last_sync: 2025-09-22T18:50:15Z
+last_sync: 2025-09-24T06:33:41Z
 ---
 
 # Epic: immediate-actions

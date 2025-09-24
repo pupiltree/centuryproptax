@@ -5,7 +5,7 @@ created: 2025-09-19T12:13:33Z
 progress: 100%
 prd: .claude/prds/remove-redundant-files.md
 github: https://github.com/pupiltree/centuryproptax/issues/11
-last_sync: 2025-09-23T10:30:00Z
+last_sync: 2025-09-24T06:33:41Z
 ---
 
 # Epic: Remove Redundant Files
