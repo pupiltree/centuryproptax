@@ -139,6 +139,38 @@ class ModernIntegratedWebhookHandler:
             except Exception as send_error:
                 self.logger.error(f"Failed to send fallback message: {send_error}")
 
+    async def _handle_web_message(self, message_data: Dict[str, Any], session_id: str, platform: str = "web") -> Optional[str]:
+        """Handle incoming web chat message and return response text."""
+        try:
+            sender_id = message_data.get("from")
+            message_text = message_data.get("text", {}).get("body", "")
+
+            if not sender_id or not message_text.strip():
+                return None
+
+            self.logger.info(
+                "Processing web message",
+                sender_id=sender_id[:8] + "***",
+                platform=platform
+            )
+
+            # Process with property tax assistant using provided session_id
+            response = await process_property_tax_message(
+                message=message_text,
+                customer_id=sender_id,
+                session_id=session_id
+            )
+
+            # Extract just the text from response if it's a dictionary
+            if isinstance(response, dict):
+                return response.get('text', str(response))
+            else:
+                return str(response) if response else None
+
+        except Exception as e:
+            self.logger.error(f"Error processing web message: {e}")
+            return "I apologize, but I'm experiencing technical difficulties. Please try again in a moment."
+
     async def _handle_media_message(self, sender_id: str, message_data: Dict[str, Any]):
         """Handle non-text WhatsApp messages (images, documents, etc.)."""
         message_type = message_data.get("type")

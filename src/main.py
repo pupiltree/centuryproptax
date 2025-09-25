@@ -38,9 +38,10 @@ configure_logging()
 from src.core.logging import get_logger
 logger = get_logger("main_app")
 
-# Import webhook routers  
+# Import webhook routers
 from src.api.integrated_webhooks import router as integrated_webhooks_router
 from src.api.whatsapp_webhooks import router as whatsapp_webhooks_router
+from src.api.web_chat import router as web_chat_router
 
 # Import payment system routers
 try:
@@ -145,9 +146,10 @@ else:
         allow_headers=["*"],
     )
 
-# Include webhook routers  
+# Include webhook routers
 app.include_router(integrated_webhooks_router)  # Production: Integrated LangGraph agent with Redis persistence
 app.include_router(whatsapp_webhooks_router)  # WhatsApp Business API integration
+app.include_router(web_chat_router)  # Web UI Chat Demo
 
 # Include payment system routers
 if PAYMENT_ROUTES_AVAILABLE:
