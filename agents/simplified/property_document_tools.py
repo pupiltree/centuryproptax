@@ -182,9 +182,8 @@ def confirm_property_assessment_booking(
         }
 
 
-# REMOVED: format_prescription_summary tool - LLM now handles formatting intelligently
-# The LLM can naturally format prescription data based on the raw prescription_data dict
-# This eliminates 56 lines of redundant formatting code
+# Property tax document analysis tools for Century Property Tax
+# Tools for processing property tax documents, assessments, and related paperwork
 
 
 # Helper function to integrate with existing workflow
