@@ -672,18 +672,20 @@ async def _create_order_async(
                             processed_address = address
                             print(f"🔧 CREATE_ORDER DEBUG: Using provided address dict: {processed_address}")
 
-                    booking = await assessment_request_repo.create_booking(
+                    booking = await assessment_request_repo.create_request(
                         customer_id=customer.id,
-                        test_id=test_record.get("id", f"prop_tax_{i+1}"),  # Use dummy ID for property tax services
-                        booking_id=booking_id,
+                        service_id=test_record.get("id", 1),  # Use service ID for property tax consultations
+                        request_id=booking_id,
                         total_amount=Decimal("0.00"),  # Property tax consultations are FREE
+                        description=f"Property tax consultation for {test_info['name']}",
+                        request_type="property_assessment",
                         preferred_date=parsed_preferred_date,
                         preferred_time=preferred_time,
-                        collection_type=collection_type,
-                        collection_address=processed_address
+                        delivery_method=collection_type,
+                        delivery_address=processed_address
                     )
-                    booking_ids.append(booking.booking_id)
-                    print(f"✅ CREATE_ORDER DEBUG: Created booking {booking.booking_id} for {test_info['name']}")
+                    booking_ids.append(booking.request_id)
+                    print(f"✅ CREATE_ORDER DEBUG: Created assessment request {booking.request_id} for {test_info['name']}")
                 else:
                     print(f"⚠️ CREATE_ORDER DEBUG: Could not find service record for {test_info['code']}")
             
