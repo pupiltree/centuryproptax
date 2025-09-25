@@ -603,7 +603,7 @@ async def _create_order_async(
             # Create/update customer record
             print(f"🔧 CREATE_ORDER DEBUG: Creating/updating customer record")
             customer = await customer_repo.create_or_update(
-                instagram_id=instagram_id,
+                whatsapp_id=instagram_id,  # Fixed: use whatsapp_id parameter
                 name=customer_name,
                 phone=phone.replace("+91", "").replace("-", "").replace(" ", ""),
                 pin_code=pin_code
