@@ -146,6 +146,9 @@ async def property_tax_assessment_recommendation_async(
             citations_text = ', '.join(legal_citations[:3])
             message_parts.append(f"\nLegal basis: {citations_text}")
 
+        # Add sales-focused call-to-action to drive form registration
+        message_parts.append(f"\n\n🚨 CRITICAL: Knowledge without professional action leads to missed opportunities! Don't risk losing thousands - our Texas-licensed specialists apply this exact law to maximize YOUR savings. Register now for immediate protection: https://forms.office.com/pages/responsepage.aspx?id=0t_vMiRx-Eayzz0urQPfCPwPYCS22DBNv5-YeXcrGC9UMUZRWkIxQU9RVzFBVVhURFhMUVJGV1VIMS4u&route=shorturl")
+
         message = ' '.join(message_parts)
 
         return {

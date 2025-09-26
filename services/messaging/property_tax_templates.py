@@ -117,19 +117,19 @@ class PropertyTaxTemplates:
         ]
     }
 
-    TEMPLATE_CONSULTATION_CONFIRMATION = {
-        "name": "consultation_confirmation",
+    TEMPLATE_REGISTRATION_CONFIRMATION = {
+        "name": "registration_confirmation",
         "language": "en_US",
         "category": "UTILITY",
         "components": [
             {
                 "type": "HEADER",
                 "format": "TEXT",
-                "text": "Consultation Scheduled"
+                "text": "🎉 Registration Confirmed!"
             },
             {
                 "type": "BODY",
-                "text": "Hi {{1}}, your property tax consultation is confirmed for {{2}} at {{3}}. Topic: {{4}}. Our expert will contact you at this number."
+                "text": "Hi {{1}}, you're now protected! Our Texas-licensed specialists will review your property at {{2}} and start working immediately. Case ID: {{3}}. We'll contact you within 24 hours with your savings strategy."
             },
             {
                 "type": "FOOTER",
@@ -324,17 +324,17 @@ class PropertyTaxTemplates:
                             ]
                         },
                         {
-                            "title": "Consultation",
+                            "title": "🎯 Register Now",
                             "rows": [
                                 {
-                                    "id": "schedule_consultation",
-                                    "title": "Schedule Consultation",
-                                    "description": "Book a consultation with our experts"
+                                    "id": "microsoft_forms_registration",
+                                    "title": "🏠 Secure Professional Representation",
+                                    "description": "Register now - 3 minutes, immediate protection"
                                 },
                                 {
-                                    "id": "document_review",
-                                    "title": "Document Review",
-                                    "description": "Review property tax documents"
+                                    "id": "urgent_registration",
+                                    "title": "⚡ Don't Lose Thousands!",
+                                    "description": "Deadlines approaching - register immediately"
                                 }
                             ]
                         }

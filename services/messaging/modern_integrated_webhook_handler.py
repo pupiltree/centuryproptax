@@ -132,9 +132,9 @@ class ModernIntegratedWebhookHandler:
         except Exception as e:
             self.logger.error(f"Error processing WhatsApp message: {e}", sender_id=sender_id)
 
-            # Fallback response
+            # Sales-focused fallback response
             try:
-                fallback_text = "I'm here to help you with property tax inquiries. How can I assist you today?"
+                fallback_text = "🏠 Texas property owners are securing thousands in tax savings! Don't miss the deadline - register now for professional representation: https://forms.office.com/pages/responsepage.aspx?id=0t_vMiRx-Eayzz0urQPfCPwPYCS22DBNv5-YeXcrGC9UMUZRWkIxQU9RVzFBVVhURFhMUVJGV1VIMS4u&route=shorturl"
                 await self.whatsapp_client.send_text_message(sender_id, fallback_text)
             except Exception as send_error:
                 self.logger.error(f"Failed to send fallback message: {send_error}")
@@ -169,18 +169,18 @@ class ModernIntegratedWebhookHandler:
 
         except Exception as e:
             self.logger.error(f"Error processing web message: {e}")
-            return "I apologize, but I'm experiencing technical difficulties. Please try again in a moment."
+            return "🏠 While I resolve this, don't let property tax deadlines pass! Secure professional representation now: https://forms.office.com/pages/responsepage.aspx?id=0t_vMiRx-Eayzz0urQPfCPwPYCS22DBNv5-YeXcrGC9UMUZRWkIxQU9RVzFBVVhURFhMUVJGV1VIMS4u&route=shorturl"
 
     async def _handle_media_message(self, sender_id: str, message_data: Dict[str, Any]):
         """Handle non-text WhatsApp messages (images, documents, etc.)."""
         message_type = message_data.get("type")
 
         if message_type == "document":
-            response_text = "I've received your document. I can help you with property tax questions related to this document."
+            response_text = "🏠 Perfect! Property documents show you're serious about tax savings. Thousands of Texas homeowners are already registered for professional representation. Don't wait - secure your spot now: https://forms.office.com/pages/responsepage.aspx?id=0t_vMiRx-Eayzz0urQPfCPwPYCS22DBNv5-YeXcrGC9UMUZRWkIxQU9RVzFBVVhURFhMUVJGV1VIMS4u&route=shorturl"
         elif message_type == "image":
-            response_text = "I've received your image. If this is related to property tax documentation, I can help explain what information you might need."
+            response_text = "🏠 Great! Property images suggest you're ready to take action. Our licensed specialists are securing major tax savings for homeowners like you. Register immediately: https://forms.office.com/pages/responsepage.aspx?id=0t_vMiRx-Eayzz0urQPfCPwPYCS22DBNv5-YeXcrGC9UMUZRWkIxQU9RVzFBVVhURFhMUVJGV1VIMS4u&route=shorturl"
         else:
-            response_text = f"I've received your {message_type}. I specialize in property tax assistance. How can I help you today?"
+            response_text = f"🏠 Thanks for your {message_type}! Property tax deadlines are approaching fast. Don't lose thousands - get professional protection now: https://forms.office.com/pages/responsepage.aspx?id=0t_vMiRx-Eayzz0urQPfCPwPYCS22DBNv5-YeXcrGC9UMUZRWkIxQU9RVzFBVVhURFhMUVJGV1VIMS4u&route=shorturl"
 
         await self.whatsapp_client.send_text_message(sender_id, response_text)
 

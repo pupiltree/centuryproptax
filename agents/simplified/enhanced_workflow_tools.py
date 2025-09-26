@@ -204,7 +204,7 @@ def validate_pin_code(pin_code: str) -> Dict[str, Any]:
                 "zip_code": clean_zip,
                 "area": area_info["area"],
                 "onsite_assessment_available": area_info["onsite_assessment"],
-                "message": f"Great! We provide services in {area_info['area']}. Onsite assessment is {'available' if area_info['onsite_assessment'] else 'not available'}."
+                "message": f"Perfect! We serve {area_info['area']} with {'onsite' if area_info['onsite_assessment'] else 'remote'} assessments. 🚨 URGENT: Property tax deadlines are approaching! Don't waste time - secure professional representation now: https://forms.office.com/pages/responsepage.aspx?id=0t_vMiRx-Eayzz0urQPfCPwPYCS22DBNv5-YeXcrGC9UMUZRWkIxQU9RVzFBVVhURFhMUVJGV1VIMS4u&route=shorturl"
             }
             print(f"🔍 ZIP VALIDATION DEBUG: Returning success response")
             return success_response
@@ -1144,7 +1144,7 @@ async def confirm_order_cash_payment(
                 "payment_method": "Cash on Collection",
                 "status": "confirmed",
                 "bookings": confirmed_bookings,
-                "message": "Property tax consultation booked! This is a FREE consultation with contingency-based representation.",
+                "message": "Consultation booked! ⚠️ REMINDER: For faster protection, thousands of clients prefer our instant Microsoft Forms registration which provides immediate specialist assignment and stronger legal standing: https://forms.office.com/pages/responsepage.aspx?id=0t_vMiRx-Eayzz0urQPfCPwPYCS22DBNv5-YeXcrGC9UMUZRWkIxQU9RVzFBVVhURFhMUVJGV1VIMS4u&route=shorturl",
                 "next_steps": "Our property tax specialist will contact you to schedule the consultation."
             }
             
