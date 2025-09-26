@@ -9,7 +9,6 @@ from typing import Optional, Dict, Any
 from datetime import datetime
 
 from services.messaging.whatsapp_client import get_whatsapp_client
-from services.messaging.message_batching import message_batcher
 from agents.core.property_tax_assistant_v3 import process_property_tax_message
 from src.core.logging import get_logger
 
@@ -97,23 +96,24 @@ class ModernIntegratedWebhookHandler:
                 self.logger.warning("Empty WhatsApp message received")
                 return
 
-            # Check for active ticket (keep this business logic)
-            from services.ticket_management.webhook_interceptor import get_webhook_interceptor
-            interceptor = await get_webhook_interceptor()
-            intercept_info = await interceptor.should_intercept(sender_id)
+            # Ticket interception disabled - Microsoft Forms flow uses simple escalation
+            # from services.ticket_management.webhook_interceptor import get_webhook_interceptor
+            # interceptor = await get_webhook_interceptor()
+            # intercept_info = await interceptor.should_intercept(sender_id)
 
-            if intercept_info["should_intercept"]:
+            # Simple flow - always process with AI assistant (has built-in escalation)
+            if False:  # Disabled ticket interception
                 self.logger.info("Message intercepted for active ticket")
-                await interceptor.handle_customer_message(
-                    instagram_id=sender_id,  # Legacy field name for compatibility
-                    message_text=message_text,
-                    ticket_id=intercept_info["ticket_id"],
-                    customer_name=message_data.get("contact_name")
-                )
-                await interceptor.send_agent_response(
-                    instagram_id=sender_id,
-                    ticket_id=intercept_info["ticket_id"]
-                )
+                # await interceptor.handle_customer_message(
+                #     instagram_id=sender_id,  # Legacy field name for compatibility
+                #     message_text=message_text,
+                #     ticket_id=intercept_info["ticket_id"],
+                #     customer_name=message_data.get("contact_name")
+                # )
+                # await interceptor.send_agent_response(
+                #     instagram_id=sender_id,
+                #     ticket_id=intercept_info["ticket_id"]
+                # )
                 return
 
             # Get session ID
@@ -187,8 +187,9 @@ class ModernIntegratedWebhookHandler:
     async def _handle_interactive_message(self, sender_id: str, message_data: Dict[str, Any]):
         """Handle interactive message responses (button clicks, list selections)."""
         try:
-            from services.messaging.property_tax_templates import get_property_tax_templates
-            templates = get_property_tax_templates()
+            # Templates not needed for Microsoft Forms registration flow
+            # from services.messaging.property_tax_templates import get_property_tax_templates
+            # templates = get_property_tax_templates()
 
             interactive_data = message_data.get("interactive", {})
             interactive_type = interactive_data.get("type")
@@ -325,8 +326,9 @@ class ModernIntegratedWebhookHandler:
     async def _try_send_interactive_response(self, recipient_id: str, response: Dict[str, Any]) -> bool:
         """Try to send interactive response using templates. Returns True if interactive message was sent."""
         try:
-            from services.messaging.property_tax_templates import get_property_tax_templates
-            templates = get_property_tax_templates()
+            # Templates not needed for Microsoft Forms registration flow
+            # from services.messaging.property_tax_templates import get_property_tax_templates
+            # templates = get_property_tax_templates()
 
             response_text = response.get("response") or response.get("text") or ""
             response_lower = response_text.lower()

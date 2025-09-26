@@ -16,10 +16,11 @@ from .ticket_service import (
     get_ticket_service
 )
 
-from .webhook_interceptor import (
-    WebhookInterceptor,
-    get_webhook_interceptor
-)
+# Webhook interceptor removed - Microsoft Forms uses simple escalation
+# from .webhook_interceptor import (
+#     WebhookInterceptor,
+#     get_webhook_interceptor
+# )
 
 __all__ = [
     # Models
@@ -33,6 +34,6 @@ __all__ = [
     # Services
     "TicketService",
     "get_ticket_service",
-    "WebhookInterceptor",
-    "get_webhook_interceptor",
+    # "WebhookInterceptor",      # Removed
+    # "get_webhook_interceptor", # Removed
 ]

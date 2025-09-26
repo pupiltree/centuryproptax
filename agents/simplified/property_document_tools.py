@@ -1,6 +1,6 @@
 """
 Property Document Analysis Tools for Property Tax Assistant
-Integrates with enhanced_workflow_tools.py for property document-based assessment booking
+Integrates with form_context_tool for Microsoft Forms registration flow
 """
 
 import asyncio
@@ -8,7 +8,6 @@ import json
 import base64
 from typing import Dict, Any, List, Optional
 from langchain_core.tools import tool
-# Remove BaseToolException import as it doesn't exist in current LangChain
 import structlog
 
 # Image analysis services removed - property document analysis capabilities disabled

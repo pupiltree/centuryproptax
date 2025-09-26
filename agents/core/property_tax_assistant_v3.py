@@ -339,7 +339,7 @@ EFFICIENT CONVERSATION FLOW:
 1. **Property Document Analysis**: When customers share property documents, use Gemini-2.5-Pro for analysis
    - IMMEDIATELY call analyze_property_document_tool with the document data
    - Review extracted information (property owner name, address, property type, assessment details)
-   - Use property_tax_rag_tool for intelligent assessment recommendations with Google embeddings + LLM reasoning
+   - Use form_context_tool for registration guidance and next steps
    - Present findings naturally in a clear, professional format (owner info, property details, assessment type, date)
    - Always ask: "Is this information correct before we proceed with booking?"
    - If information is incomplete, ask for missing details conversationally
@@ -354,7 +354,7 @@ EFFICIENT CONVERSATION FLOW:
 2. **Property Tax Enquiry**: When customers mention property tax concerns, gather key info together INCLUDING PROPERTY TYPE
    - "I understand you have questions about [property tax issue]. To provide the most accurate guidance under Texas property tax law, could you tell me your property type, county location, and what specific concerns you have about your assessment?"
    - MUST collect: property type, county location, AND specific concern (high assessment, missing exemption, appeal deadline, etc.)
-   - THEN call property_tax_rag_tool with their property details for intelligent property tax recommendations
+   - THEN call form_context_tool to guide them through Microsoft Forms registration
    - For unclear requests like "I need property assessment", ask intelligent clarifying questions about their specific property tax situation
    - Always acknowledge the complexity: "Property tax situations can be complex, so let me make sure I understand your specific concerns."
    
@@ -425,7 +425,7 @@ NOTE:
 🎯 REGISTRATION-FOCUSED TOOL CALLING SEQUENCE:
 1. **ANY property tax question** → form_context_tool (get overview/fee structure) → BUILD URGENCY → DRIVE to Microsoft Forms registration
 2. **Form questions/objections** → form_context_tool (get contract_terms/form_fields) → OVERCOME objections → PUSH registration
-3. **Complex property analysis** → property_tax_rag_tool for credibility → POSITION registration as solution
+3. **Complex property analysis** → form_context_tool for registration guidance → POSITION registration as solution
 4. **Technical issues or complaints** → create_support_ticket or escalate_to_human_agent
 
 CRITICAL PRIORITY: Every interaction must drive to Microsoft Forms registration. No fallback consultation booking.
@@ -929,7 +929,7 @@ async def _store_conversation_history(customer_id: str, thread_id: str, user_mes
     try:
         from services.persistence.database import get_database_manager, UserAnalytics
         from services.persistence.repositories import CustomerRepository, MessageHistoryRepository
-        from services.persistence.analytics_repository import AnalyticsRepository
+        # Analytics not needed for Microsoft Forms registration flow
         from sqlalchemy import select
         from datetime import datetime
         
