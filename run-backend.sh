@@ -112,11 +112,11 @@ async def test_components():
         from src.main import app
         print('✅ Main application loads successfully')
         
-        from agents.simplified.simplified_agent_v2 import get_simplified_agent_v2
-        print('✅ Simplified agent loads successfully')
-        
-        from services.messaging.integrated_webhook_handler import integrated_webhook_handler
-        print('✅ Webhook handler loads successfully')
+        from agents.core.property_tax_assistant_v3 import get_property_tax_assistant
+        print('✅ Property tax assistant loads successfully')
+
+        from services.messaging.modern_integrated_webhook_handler import IntegratedWebhookHandler
+        print('✅ Modern webhook handler loads successfully')
         
         from integrations.google_sheets.lead_tracker import GoogleSheetsLeadTracker
         print('✅ Google Sheets integration loads successfully')
