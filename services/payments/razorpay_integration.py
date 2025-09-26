@@ -24,8 +24,10 @@ except ImportError:
 
 try:
     from services.persistence.database import get_db_session
-    from services.persistence.repositories import BookingRepository, CustomerRepository
+    from services.persistence.repositories import PropertyAssessmentRequestRepository, CustomerRepository
     DATABASE_AVAILABLE = True
+    # Alias for compatibility
+    BookingRepository = PropertyAssessmentRequestRepository
 except ImportError:
     DATABASE_AVAILABLE = False
     print("⚠️ Database not available. Using mock mode.")
