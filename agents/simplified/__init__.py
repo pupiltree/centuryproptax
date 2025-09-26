@@ -4,10 +4,8 @@ Following LangGraph customer support patterns for simplicity and maintainability
 """
 
 # Import available tools
-from agents.simplified.property_tax_rag_tool import property_tax_rag_tool
 from agents.simplified.ticket_tools import *
 
 __all__ = [
-    # Unified Property Tax RAG tool
-    "property_tax_rag_tool",
+    # Only ticket tools remain - property tax expertise provided by form_context_tool
 ]

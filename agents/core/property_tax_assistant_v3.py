@@ -40,8 +40,7 @@ logger = get_logger("property_tax_assistant")
 # Microsoft Forms registration funnel - no fallback workflow tools needed
 # All interactions drive directly to Microsoft Forms registration
 
-# Import Unified Property Tax RAG system for intelligent assessment enquiries (workflow node G)
-from agents.simplified.property_tax_rag_tool import property_tax_rag_tool
+# Removed property_tax_rag_tool - redundant with form_context_tool for Microsoft Forms registration
 from langchain_core.tools import tool
 
 # Import ticket management for complaints (workflow node I)  
@@ -249,9 +248,6 @@ def create_property_tax_assistant():
     property_tax_tools = [
         # PRIMARY GOAL: Drive Microsoft Forms registration
         form_context_tool,
-
-        # SECONDARY SUPPORT: Property tax expertise to build credibility and urgency
-        property_tax_rag_tool,
 
         # SUPPORT OPTIONS: Only for complex queries or complaints
         create_support_ticket,
