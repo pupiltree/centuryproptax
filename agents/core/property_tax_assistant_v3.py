@@ -37,28 +37,8 @@ from src.core.logging import get_logger
 
 logger = get_logger("property_tax_assistant")
 
-# Import workflow-compliant tools
-from agents.simplified.enhanced_workflow_tools import (
-    # F: Book Assessment - Collect ZIP code, date, assessment type
-    validate_pin_code,
-
-    # G: Assessment Enquiry - Explain assessment prep, duration, pricing
-    # (We'll use RAG system for this)
-
-    # H: Lookup recent assessment or report
-    check_report_status,
-
-    # I: Create ticket via /tickets
-    # (We'll use complaint handling)
-
-    # J: Handover to agent via /handover
-    # (We'll use escalation)
-
-    # Q: Create consultation appointment (FREE - no payment required)
-    create_order,
-
-    # REMOVED: All payment-related tools - consultations are FREE and contingency-based
-)
+# Microsoft Forms registration funnel - no fallback workflow tools needed
+# All interactions drive directly to Microsoft Forms registration
 
 # Import Unified Property Tax RAG system for intelligent assessment enquiries (workflow node G)
 from agents.simplified.property_tax_rag_tool import property_tax_rag_tool
@@ -136,7 +116,7 @@ class PropertyTaxToolNode:
             tool_args = tool_call["args"].copy()
             
             # Automatically inject instagram_id for tools that need it
-            if tool_name in ["create_order", "create_support_ticket"]:
+            if tool_name in ["create_support_ticket"]:
                 if instagram_id and "instagram_id" not in tool_args:
                     tool_args["instagram_id"] = instagram_id
             
@@ -265,19 +245,16 @@ def create_property_tax_assistant():
     # Import form context tool for registration drive
     from agents.simplified.form_context_tool import form_context_tool
 
-    # Sales-focused tools prioritizing form registration
+    # Microsoft Forms registration funnel tools
     property_tax_tools = [
         # PRIMARY GOAL: Drive Microsoft Forms registration
         form_context_tool,
 
         # SECONDARY SUPPORT: Property tax expertise to build credibility and urgency
         property_tax_rag_tool,
-        validate_pin_code,
 
-        # FALLBACK OPTIONS: Only if registration fails
-        check_report_status,
+        # SUPPORT OPTIONS: Only for complex queries or complaints
         create_support_ticket,
-        create_order,
         escalate_to_human_agent,
 
         # Property document analysis for building urgency
@@ -449,13 +426,13 @@ NOTE:
 - Phone number is automatically extracted from WhatsApp - do not ask for it
 - NO UPFRONT PAYMENT required - consultations are FREE, contingency-based service
 
-🎯 SALES-FOCUSED TOOL CALLING SEQUENCE:
+🎯 REGISTRATION-FOCUSED TOOL CALLING SEQUENCE:
 1. **ANY property tax question** → form_context_tool (get overview/fee structure) → BUILD URGENCY → DRIVE to Microsoft Forms registration
 2. **Form questions/objections** → form_context_tool (get contract_terms/form_fields) → OVERCOME objections → PUSH registration
 3. **Complex property analysis** → property_tax_rag_tool for credibility → POSITION registration as solution
-4. **Fallback only if registration fails** → validate_pin_code → create_order for consultation
+4. **Technical issues or complaints** → create_support_ticket or escalate_to_human_agent
 
-CRITICAL PRIORITY: Every interaction must attempt Microsoft Forms registration before offering alternatives.
+CRITICAL PRIORITY: Every interaction must drive to Microsoft Forms registration. No fallback consultation booking.
 
 MULTILINGUAL EXAMPLES:
 

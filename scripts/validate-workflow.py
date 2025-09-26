@@ -14,17 +14,8 @@ def validate_tool_implementation():
     print("🔧 Validating Tool Implementation...")
     
     try:
-        # Import all enhanced workflow tools
-        from agents.simplified.enhanced_workflow_tools import (
-            validate_pin_code,
-            suggest_advanced_test_panel,
-            create_order,
-            create_payment_link,
-            check_report_status,
-            confirm_order_cash_payment,
-            get_payment_options,
-            schedule_sample_collection,
-        )
+        # Microsoft Forms registration funnel - no workflow tools needed
+        # All tools focus on driving to Microsoft Forms registration
         
         # Import database tools
         from agents.simplified.database_booking_tools import (
@@ -47,15 +38,10 @@ def validate_tool_implementation():
             update_lead_status,
         )
         
-        enhanced_tools = [
-            ("validate_pin_code", "PIN validation for service areas"),
-            ("suggest_advanced_test_panel", "Advanced test panel recommendations"),
-            ("create_order", "Order creation following workflow"),
-            ("create_payment_link", "Payment link generation via /payments/link"),
-            ("check_report_status", "Report status and retrieval"),
-            ("confirm_order_cash_payment", "Cash payment confirmation"),
-            ("get_payment_options", "Payment method options"),
-            ("schedule_sample_collection", "Sample collection scheduling"),
+        # Microsoft Forms registration funnel tools
+        registration_tools = [
+            ("form_context_tool", "Microsoft Forms registration context and contract information"),
+            ("property_tax_rag_tool", "Property tax expertise for building credibility"),
         ]
         
         database_tools = [
@@ -77,8 +63,8 @@ def validate_tool_implementation():
             ("update_lead_status", "Lead status updates"),
         ]
         
-        print("  ✅ Enhanced Workflow Tools:")
-        for tool_name, description in enhanced_tools:
+        print("  ✅ Microsoft Forms Registration Tools:")
+        for tool_name, description in registration_tools:
             print(f"    - {tool_name}: {description}")
             
         print("  ✅ Database-Backed Tools:")
@@ -89,7 +75,7 @@ def validate_tool_implementation():
         for tool_name, description in legacy_tools:
             print(f"    - {tool_name}: {description}")
             
-        total_tools = len(enhanced_tools) + len(database_tools) + len(legacy_tools)
+        total_tools = len(registration_tools) + len(database_tools) + len(legacy_tools)
         print(f"  ✅ Total tools implemented: {total_tools}")
         
         return True
@@ -174,11 +160,8 @@ def validate_data_structures():
         for model_name, description in data_structures:
             print(f"    - {model_name}: {description}")
             
-        # Check PIN code mappings
-        from agents.simplified.enhanced_workflow_tools import SERVICEABLE_PINS, ADVANCED_TEST_PANELS
-        
-        print(f"  ✅ Serviceable PIN codes: {len(SERVICEABLE_PINS)} areas")
-        print(f"  ✅ Advanced test panels: {len(ADVANCED_TEST_PANELS)} categories")
+        # Microsoft Forms registration works statewide - no ZIP code restrictions
+        print(f"  ✅ Statewide Texas registration available via Microsoft Forms")
         
         return True
         

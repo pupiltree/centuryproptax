@@ -17,7 +17,8 @@ async def test_intelligent_booking():
     print("🏥 Testing Intelligent Date Parsing in Booking Tools\n")
     
     # Import the updated tools
-    from agents.simplified.enhanced_workflow_tools import create_order, schedule_sample_collection
+    # Microsoft Forms registration funnel - no workflow tools to test
+    # System focuses on driving to Microsoft Forms registration only
     
     # Test natural language dates in create_order
     test_cases = [

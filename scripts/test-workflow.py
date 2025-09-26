@@ -9,16 +9,8 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from agents.simplified.enhanced_workflow_tools import (
-    validate_pin_code,
-    suggest_advanced_test_panel,
-    create_order,
-    create_payment_link,
-    check_report_status,
-    confirm_order_cash_payment,
-    get_payment_options,
-    schedule_sample_collection,
-)
+# Microsoft Forms registration funnel - no workflow tools to import
+# System focuses on driving to Microsoft Forms registration only
 
 
 async def test_pin_validation():
