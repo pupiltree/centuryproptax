@@ -455,14 +455,16 @@ async def force_process_batch(
     user_id: str = Path(..., description="User ID to process batch for", example="919876543210")
 ):
     """Force process any pending message batch for a user (admin endpoint)."""
-    from services.messaging.message_batching import message_batcher
+    # Message batching removed - using direct processing for Microsoft Forms flow
+    # from services.messaging.message_batching import message_batcher
 
-    result = await message_batcher.force_process_user_batch(user_id)
+    # Message batching disabled - direct processing used for Microsoft Forms flow
+    # result = await message_batcher.force_process_user_batch(user_id)
 
     return {
-        "status": "success" if result else "warning",
+        "status": "disabled",
         "user_id": user_id,
-        "batch_processed": result,
-        "message": "Batch processed successfully" if result else "No pending batch found for user",
+        "batch_processed": False,
+        "message": "Message batching disabled - using direct processing for Microsoft Forms registration",
         "timestamp": datetime.now().isoformat()
     }

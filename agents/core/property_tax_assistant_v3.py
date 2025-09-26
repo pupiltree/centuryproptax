@@ -29,9 +29,9 @@ from langgraph.checkpoint.memory import InMemorySaver
 from services.persistence.redis_conversation_store import get_conversation_store
 from langchain_core.prompts import ChatPromptTemplate
 
-# Import new AI configuration and guardrails
-from config.ai_configuration import get_ai_config, PropertyTaxDomain
-from agents.core.guardrails import get_guardrails, apply_guardrails
+# AI configuration and guardrails removed - Microsoft Forms registration doesn't need complex safety measures
+# from config.ai_configuration import get_ai_config, PropertyTaxDomain
+# from agents.core.guardrails import get_guardrails, apply_guardrails
 from config.response_templates import get_template, PropertyTaxScenario, detect_language_from_message
 from src.core.logging import get_logger
 

@@ -25,8 +25,9 @@ import uvicorn
 # Import production middleware and optimization modules
 from src.middleware.performance import setup_performance_middleware
 from src.middleware.security import setup_security_middleware
-from src.middleware.monitoring import setup_monitoring_middleware
-from src.seo.optimization import setup_seo_routes
+# Monitoring middleware and SEO optimization removed - not needed for Microsoft Forms registration
+# from src.middleware.monitoring import setup_monitoring_middleware
+# from src.seo.optimization import setup_seo_routes
 
 # Load environment variables
 load_dotenv()
@@ -123,11 +124,9 @@ if is_production:
     # Performance optimization middleware
     setup_performance_middleware(app)
 
-    # Monitoring and metrics middleware
-    setup_monitoring_middleware(app)
-
-    # SEO optimization routes
-    setup_seo_routes(app)
+    # Monitoring middleware and SEO routes removed - streamlined for Microsoft Forms registration
+    # setup_monitoring_middleware(app)
+    # setup_seo_routes(app)
 
     logger.info("✅ Production middleware and optimizations enabled")
 else:
@@ -156,28 +155,11 @@ try:
 except ImportError as e:
     logger.warning(f"⚠️ Ticket management routes not loaded: {e}")
 
-# Include report management routes
-try:
-    from src.api.report_management import router as report_router
-    app.include_router(report_router)
-    logger.info("✅ Report management system loaded")
-except ImportError as e:
-    logger.warning(f"⚠️ Report management routes not loaded: {e}")
+# Report management and monitoring dashboards removed - Microsoft Forms flow is streamlined
+# Complex reporting and monitoring not needed for simple registration process
+logger.info("✅ Streamlined API - complex reporting and monitoring removed for Microsoft Forms focus")
 
-# Include monitoring dashboard routes
-try:
-    from src.api.monitoring_dashboards import router as monitoring_router, setup_monitoring_dashboards
-    app.include_router(monitoring_router)
-    logger.info("✅ Production monitoring dashboards loaded")
-
-    # Initialize monitoring on startup
-    @app.on_event("startup")
-    async def initialize_monitoring():
-        await setup_monitoring_dashboards()
-        logger.info("✅ Monitoring dashboards initialized")
-
-except ImportError as e:
-    logger.warning(f"⚠️ Monitoring dashboard routes not loaded: {e}")
+# Monitoring initialization removed with dashboard removal
 
 # Mount static files for documentation portal
 import os
