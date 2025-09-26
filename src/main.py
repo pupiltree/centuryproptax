@@ -43,9 +43,8 @@ from src.api.integrated_webhooks import router as integrated_webhooks_router
 from src.api.whatsapp_webhooks import router as whatsapp_webhooks_router
 from src.api.web_chat import router as web_chat_router
 
-# Import payment system routers
+# Import payment system routers (removed mock_payment_routes - redundant in Microsoft Forms flow)
 try:
-    from app.routes.mock_payment_routes import router as mock_payment_router
     from app.webhooks.razorpay_webhook import router as razorpay_webhook_router
     PAYMENT_ROUTES_AVAILABLE = True
 except ImportError as e:
@@ -153,7 +152,7 @@ app.include_router(web_chat_router)  # Web UI Chat Demo
 
 # Include payment system routers
 if PAYMENT_ROUTES_AVAILABLE:
-    app.include_router(mock_payment_router)  # Mock Razorpay payment system
+    # Removed mock_payment_router - redundant in Microsoft Forms registration flow
     app.include_router(razorpay_webhook_router)  # Real Razorpay webhook handler
     logger.info("✅ Payment system routes loaded")
 else:
