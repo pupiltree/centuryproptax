@@ -141,6 +141,22 @@
             color: #374151;
         }
 
+        .message a {
+            color: #3b82f6 !important;
+            text-decoration: underline;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        .message a:hover {
+            color: #2563eb !important;
+            text-decoration: underline;
+        }
+
+        .message a:visited {
+            color: #7c3aed !important;
+        }
+
         .message.system {
             align-self: center;
             background: rgba(34, 197, 94, 0.05);
@@ -714,10 +730,24 @@
 
                 // Ensure text is properly converted to string
                 const messageText = typeof text === 'string' ? text : String(text);
-                messageDiv.textContent = messageText;
+
+                // Convert markdown links to HTML using regex
+                const htmlText = this.convertMarkdownLinksToHtml(messageText);
+                messageDiv.innerHTML = htmlText;
 
                 this.messagesContainer.appendChild(messageDiv);
                 this.messagesContainer.scrollTop = this.messagesContainer.scrollHeight;
+            }
+
+            convertMarkdownLinksToHtml(text) {
+                // Regex to match markdown links: [text](url)
+                const markdownLinkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+
+                // Replace markdown links with HTML anchor tags
+                return text.replace(markdownLinkRegex, (match, linkText, url) => {
+                    // Add target="_blank" to open in new tab and rel="noopener noreferrer" for security
+                    return `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color: #3b82f6; text-decoration: underline; font-weight: 500;">${linkText}</a>`;
+                });
             }
 
             showTypingIndicator() {
