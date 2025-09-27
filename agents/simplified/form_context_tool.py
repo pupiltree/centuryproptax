@@ -71,8 +71,13 @@ class FormContextTool(BaseTool):
         elif any(word in query_lower for word in ['fee', 'cost', 'price', 'payment']):
             return "We work on contingency - you pay nothing upfront. Our fee is 35% of the tax savings we achieve for residential properties. If we can't save you money, you owe us nothing."
 
-        elif any(word in query_lower for word in ['cancel', 'commitment', 'contract']):
-            return "You can cancel anytime before March 1st each year with no penalty. The agreement automatically renews unless you cancel in writing by that date."
+        elif any(word in query_lower for word in ['cancel', 'commitment', 'contract', 'understand', 'explain']):
+            return """Here are the key contract points:
+• **No upfront costs** - You pay nothing until we save you money
+• **35% fee** for residential properties (only if we succeed)
+• **Cancel anytime** before March 1st each year with no penalty
+• **Auto-renewal** unless you cancel in writing by March 1st
+• **Risk-free** - If we can't help, you owe us nothing"""
 
         elif any(word in query_lower for word in ['process', 'how', 'work']):
             return "Simple 3-step process: 1) Fill out the form with your property details, 2) A specialist reviews your case within 24 hours, 3) If we can help, we handle everything and you pay only after we save you money."
